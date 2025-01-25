@@ -23,18 +23,18 @@ async def main():
         ComponentName.PREREQUISITE,
         ComponentName.TEACHES,
     ]
-    processing_strategies: list[BaseProcessingStrategy] = [ProcessingMixin(component).data_processing_strategy for component in components]
+    processing_mixins: list[ProcessingMixin] = [ProcessingMixin(component) for component in components]
 
-    node_processing_strategies: list[NodeProcessingStrategy] = list(
-        filter(lambda c: c.COMPONENT_TYPE == ComponentType.NODE, processing_strategies))
-    relationship_processing_strategies: list[RelationshipProcessingStrategy] = list(
-        filter(lambda c: c.COMPONENT_TYPE == ComponentType.RELATIONSHIP, processing_strategies))
+    node_processing_mixins: list[ProcessingMixin] = list(
+        filter(lambda c: c.data_processing_strategy.COMPONENT_TYPE == ComponentType.NODE, processing_mixins))
+    relationship_processing_mixins: list[ProcessingMixin] = list(
+        filter(lambda c: c.data_processing_strategy.COMPONENT_TYPE == ComponentType.RELATIONSHIP, processing_mixins))
 
     with ProcessPoolExecutor() as executor:
-        node_futures: list[Future] = [executor.submit(strategy.run) for strategy in node_processing_strategies]
+        node_futures: list[Future] = [executor.submit(mixin.run) for mixin in node_processing_mixins]
         for future in node_futures:
             future.result()
-        relationship_future: list[Future] = [executor.submit(strategy.run) for strategy in relationship_processing_strategies]
+        relationship_future: list[Future] = [executor.submit(mixin.run) for mixin in relationship_processing_mixins]
         for future in relationship_future:
             future.result()
 

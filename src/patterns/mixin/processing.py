@@ -23,4 +23,4 @@ class ProcessingMixin:
             raise ValueError(f"Unsupported component name: {component_name}")
 
     def run(self):
-        self.data_processing_strategy.process()
+        self.data_processing_strategy.run()
