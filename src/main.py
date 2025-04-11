@@ -1,13 +1,14 @@
 import asyncio
 import logging
 import time
-from asyncio import Future
-from concurrent.futures import ProcessPoolExecutor
 
-from src.models.enums import ComponentType, ComponentName
+import pandas as pd
+from neomodel.async_.core import AsyncDatabase
+
+from src.enums import ComponentType, ComponentName
+from src.patterns.mixin.database import DatabaseMixin
+from src.patterns.mixin.ingesting import IngestingMixin
 from src.patterns.mixin.processing import ProcessingMixin
-from src.patterns.strategy.processing.base_processing import NodeProcessingStrategy, \
-    RelationshipProcessingStrategy, BaseProcessingStrategy
 
 logging.basicConfig(level=logging.INFO)
 
@@ -15,7 +16,12 @@ logging.basicConfig(level=logging.INFO)
 async def main():
     logging.info("Starting...")
     start = time.perf_counter()
-    components: list[ComponentName] = [
+
+    db: AsyncDatabase = await DatabaseMixin.connect()
+
+    await DatabaseMixin.clear_database(db)
+
+    component_names: list[ComponentName] = [
         ComponentName.STUDY_PROGRAM,
         ComponentName.COURSE,
         ComponentName.PROFESSOR,
@@ -23,20 +29,31 @@ async def main():
         ComponentName.PREREQUISITE,
         ComponentName.TEACHES,
     ]
-    processing_mixins: list[ProcessingMixin] = [ProcessingMixin(component) for component in components]
 
-    node_processing_mixins: list[ProcessingMixin] = list(
-        filter(lambda c: c.data_processing_strategy.COMPONENT_TYPE == ComponentType.NODE, processing_mixins))
-    relationship_processing_mixins: list[ProcessingMixin] = list(
-        filter(lambda c: c.data_processing_strategy.COMPONENT_TYPE == ComponentType.RELATIONSHIP, processing_mixins))
+    node_components = list(filter(lambda x: ComponentName.get_component_type(x) == ComponentType.NODE, component_names))
+    relationship_components = list(filter(lambda x: ComponentName.get_component_type(x) == ComponentType.RELATIONSHIP, component_names))
+    processing_tasks: dict[ComponentName, asyncio.Task] = {
+        component_name: asyncio.create_task(ProcessingMixin(component_name).run()) for component_name in component_names
+    }
 
-    with ProcessPoolExecutor() as executor:
-        node_futures: list[Future] = [executor.submit(mixin.run) for mixin in node_processing_mixins]
-        for future in node_futures:
-            future.result()
-        relationship_future: list[Future] = [executor.submit(mixin.run) for mixin in relationship_processing_mixins]
-        for future in relationship_future:
-            future.result()
+    processing_tasks: dict[ComponentName, pd.DataFrame] = dict(
+        zip(processing_tasks.keys(), await asyncio.gather(*processing_tasks.values())))  # type: ignore
+
+    ingesting_tasks: dict[ComponentName, asyncio.Task] = {
+        component_name: asyncio.create_task(IngestingMixin(component_name).run(processing_tasks[component_name], db)) for component_name in
+        node_components
+    }
+
+    await asyncio.gather(*ingesting_tasks.values())
+
+    ingesting_tasks: dict[ComponentName, asyncio.Task] = {
+        component_name: asyncio.create_task(IngestingMixin(component_name).run(processing_tasks[component_name], db)) for component_name in
+        relationship_components
+    }
+
+    await asyncio.gather(*ingesting_tasks.values())
+
+    await DatabaseMixin.disconnect(db)
 
     logging.info(f"Time taken: {time.perf_counter() - start:.2f} seconds")
 
