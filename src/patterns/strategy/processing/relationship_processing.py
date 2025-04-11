@@ -1,53 +1,25 @@
-from neomodel import StructuredRel
+from pathlib import Path
 
 from src.config import Config
-from src.models.nodes import StudyProgram, Course, Professor, BaseStructuredNode
-from src.models.relationships import Curriculum, Prerequisite, Teaches
-from src.patterns.strategy.processing.base_processing import RelationshipProcessingStrategy
+from src.enums import CoursePrerequisiteType
+from src.patterns.strategy.processing.base_processing import BaseProcessingStrategy
 
 
-class CurriculumDataProcessingStrategy(RelationshipProcessingStrategy):
-    MODEL: StructuredRel = Curriculum
-    RELATIONSHIP_PROPERTY_NAME = 'courses'
-    SOURCE_NODE_MODEL: BaseStructuredNode = StudyProgram
-    TARGET_NODE_MODEL: BaseStructuredNode = Course
-    SOURCE_NODE_COLUMN: str = "study_program_id"
-    TARGET_NODE_COLUMN: str = "course_id"
-    FIELD_MAPPING: dict[str, str] = {
-        "course_level": "level",
-        "course_type": "type",
-        "course_semester": "semester",
-        "course_season": "season",
-        "course_academic_year": "academic_year"
-    }
+class CurriculumProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.CURRICULA_INPUT_DATA_FILE_NAME
     COLUMNS: list[str] = Config.CURRICULUM_COLUMNS
-    GROUP_BY_COLUMN: str = "study_program_id"
+    COLUMN_MAPPING: dict[str, str] = Config.CURRICULUM_COLUMN_MAPPING
 
 
-class PrerequisiteDataProcessingStrategy(RelationshipProcessingStrategy):
-    MODEL: StructuredRel = Prerequisite
-    RELATIONSHIP_PROPERTY_NAME = 'prerequisite'
-    SOURCE_NODE_MODEL: BaseStructuredNode = Course
-    TARGET_NODE_MODEL: BaseStructuredNode = Course
-    SOURCE_NODE_COLUMN: str = "course_id"
-    TARGET_NODE_COLUMN: str = "course_prerequisites_course_id"
-    FIELD_MAPPING: dict[str, str] = {
-        "course_prerequisite_type": "type",
-        "course_prerequisites_minimum_required_courses": "number_of_courses_required"
-    }
+class PrerequisiteProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.PREREQUISITES_INPUT_DATA_FILE_NAME
     COLUMNS: list[str] = Config.PREREQUISITE_COLUMNS
-    PREDICATE: callable = lambda df: df['course_prerequisite_type'] != 'NO_PREREQUISITE'
-    GROUP_BY_COLUMN: str = "course_id"
+    COLUMN_MAPPING: dict[str, str] = Config.PREREQUISITE_COLUMN_MAPPING
+    PREDICATE: callable = lambda df: df['type'] != CoursePrerequisiteType.NONE.value
 
 
-class TeachesDataProcessingStrategy(RelationshipProcessingStrategy):
-    MODEL: StructuredRel = Teaches
-    RELATIONSHIP_PROPERTY_NAME = 'taught_by'
-    SOURCE_NODE_MODEL: BaseStructuredNode = Course
-    TARGET_NODE_MODEL: BaseStructuredNode = Professor
-    SOURCE_NODE_COLUMN: str = "course_id"
-    TARGET_NODE_COLUMN: str = "course_professors_id"
-    FIELD_MAPPING: dict[str, str] = {}
+class TeachesProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.TAUGHT_BY_INPUT_DATA_FILE_NAME
     COLUMNS: list[str] = Config.TEACHES_COLUMNS
-    PREDICATE: callable = lambda df: df['course_professors_id'] != 58
-    GROUP_BY_COLUMN: str = "course_id"
+    COLUMN_MAPPING: dict[str, str] = Config.TEACHES_COLUMN_MAPPING
+    PREDICATE: callable = lambda df: df['professor_id'] != 58

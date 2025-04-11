@@ -1,37 +1,23 @@
+from pathlib import Path
+
 from src.config import Config
-from src.models.nodes import Professor, Course, StudyProgram
-from src.patterns.strategy.processing.base_processing import NodeProcessingStrategy
+from src.patterns.strategy.processing.base_processing import BaseProcessingStrategy
 
 
-class StudyProgramDataProcessingStrategy(NodeProcessingStrategy):
-    MODEL = StudyProgram
-    FIELD_MAPPING = {
-        "study_program_id": "uid",
-        "study_program_code": "code",
-        "study_program_name": "name",
-        "study_program_duration": "duration",
-        "study_program_url": "url",
-    }
-    COLUMNS = Config.STUDY_PROGRAM_COLUMNS
+class StudyProgramProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.STUDY_PROGRAMS_INPUT_DATA_FILE_NAME
+    COLUMNS: list[str] = Config.STUDY_PROGRAM_COLUMNS
+    COLUMN_MAPPING: dict[str, str] = Config.STUDY_PROGRAM_COLUMN_MAPPING
 
 
-class CourseDataProcessingStrategy(NodeProcessingStrategy):
-    MODEL = Course
-    FIELD_MAPPING = {
-        "course_id": "uid",
-        "course_code": "code",
-        "course_name_mk": "name_mk",
-        "course_name_en": "name_en",
-        "course_url": "url",
-    }
-    COLUMNS = Config.COURSE_COLUMNS
+class CourseProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.COURSES_INPUT_DATA_FILE_NAME
+    COLUMNS: list[str] = Config.COURSE_COLUMNS
+    COLUMN_MAPPING: dict[str, str] = Config.COURSE_COLUMN_MAPPING
 
 
-class ProfessorDataProcessingStrategy(NodeProcessingStrategy):
-    MODEL = Professor
-    FIELD_MAPPING = {
-        "course_professors_id": "uid",
-        "course_professors": "name",
-    }
-    COLUMNS = Config.PROFESSOR_COLUMNS
-    PREDICATE: callable = lambda df: df['course_professors'] != 'нема'
+class ProfessorProcessingStrategy(BaseProcessingStrategy):
+    PATH: Path = Config.PROFESSORS_INPUT_DATA_FILE_NAME
+    COLUMNS: list[str] = Config.PROFESSOR_COLUMNS
+    COLUMN_MAPPING: dict[str, str] = Config.PROFESSOR_COLUMN_MAPPING
+    PREDICATE: callable = lambda df: df['uid'] != 58

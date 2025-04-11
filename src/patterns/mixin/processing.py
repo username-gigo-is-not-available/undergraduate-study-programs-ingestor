@@ -1,26 +1,29 @@
-from src.models.enums import ComponentName
-from src.patterns.strategy.processing.node_processing import StudyProgramDataProcessingStrategy, CourseDataProcessingStrategy, \
-    ProfessorDataProcessingStrategy
-from src.patterns.strategy.processing.relationship_processing import CurriculumDataProcessingStrategy, \
-    PrerequisiteDataProcessingStrategy, TeachesDataProcessingStrategy
+import pandas as pd
+
+from src.enums import ComponentName
+from src.patterns.strategy.processing.node_processing import StudyProgramProcessingStrategy, CourseProcessingStrategy, \
+    ProfessorProcessingStrategy
+from src.patterns.strategy.processing.relationship_processing import CurriculumProcessingStrategy, PrerequisiteProcessingStrategy, \
+    TeachesProcessingStrategy
 
 
 class ProcessingMixin:
+
     def __init__(self, component_name: ComponentName):
         if component_name == ComponentName.STUDY_PROGRAM:
-            self.data_processing_strategy = StudyProgramDataProcessingStrategy()
+            self.processing_strategy = StudyProgramProcessingStrategy()
         elif component_name == ComponentName.COURSE:
-            self.data_processing_strategy = CourseDataProcessingStrategy()
+            self.processing_strategy = CourseProcessingStrategy()
         elif component_name == ComponentName.PROFESSOR:
-            self.data_processing_strategy = ProfessorDataProcessingStrategy()
+            self.processing_strategy = ProfessorProcessingStrategy()
         elif component_name == ComponentName.CURRICULUM:
-            self.data_processing_strategy = CurriculumDataProcessingStrategy()
+            self.processing_strategy = CurriculumProcessingStrategy()
         elif component_name == ComponentName.PREREQUISITE:
-            self.data_processing_strategy = PrerequisiteDataProcessingStrategy()
+            self.processing_strategy = PrerequisiteProcessingStrategy()
         elif component_name == ComponentName.TEACHES:
-            self.data_processing_strategy = TeachesDataProcessingStrategy()
+            self.processing_strategy = TeachesProcessingStrategy()
         else:
             raise ValueError(f"Unsupported component name: {component_name}")
 
-    def run(self):
-        self.data_processing_strategy.run()
+    async def run(self) -> pd.DataFrame | list[pd.DataFrame]:
+        return await self.processing_strategy.run()
