@@ -1,7 +1,7 @@
 import pandas as pd
 from neomodel.async_.core import AsyncDatabase
 
-from src.enums import ComponentName
+from src.models.enums import ComponentName
 from src.patterns.strategy.ingesting.node_ingesting import StudyProgramDataIngestingStrategy, CourseDataIngestingStrategy, \
     ProfessorDataIngestingStrategy
 from src.patterns.strategy.ingesting.relationship_ingesting import CurriculumDataIngestingStrategy, PrerequisiteDataIngestingStrategy, \

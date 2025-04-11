@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from src.config import Config
-from src.enums import CoursePrerequisiteType
+from src.models.enums import CoursePrerequisiteType
 from src.patterns.strategy.processing.base_processing import BaseProcessingStrategy
 
 
