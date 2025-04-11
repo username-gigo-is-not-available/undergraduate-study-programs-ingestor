@@ -7,7 +7,7 @@ from neomodel import db
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
 from src.config import Config
-from src.enums import ComponentType
+from src.models.enums import ComponentType
 
 
 class BaseIngestingStrategy:

@@ -5,12 +5,24 @@ import time
 import pandas as pd
 from neomodel.async_.core import AsyncDatabase
 
-from src.enums import ComponentType, ComponentName
+from src.models.enums import ComponentType, ComponentName
+from src.models.models import Component
 from src.patterns.mixin.database import DatabaseMixin
 from src.patterns.mixin.ingesting import IngestingMixin
 from src.patterns.mixin.processing import ProcessingMixin
 
 logging.basicConfig(level=logging.INFO)
+
+
+async def process_and_ingest(components: list[Component], db: AsyncDatabase) -> None:
+    processing_tasks: dict[Component, asyncio.Task] = {
+        component: asyncio.create_task(ProcessingMixin(component.component_name).run()) for component in components
+    }
+    data: dict[Component, pd.DataFrame] = dict(zip(processing_tasks.keys(), await asyncio.gather(*processing_tasks.values())))
+    ingesting_tasks: dict[Component, asyncio.Task] = {
+        component: asyncio.create_task(IngestingMixin(component.component_name).run(data[component], db)) for component in components
+    }
+    await asyncio.gather(*ingesting_tasks.values())
 
 
 async def main():
@@ -19,41 +31,28 @@ async def main():
 
     db: AsyncDatabase = await DatabaseMixin.connect()
 
-    await DatabaseMixin.clear_database(db)
+    try:
 
-    component_names: list[ComponentName] = [
-        ComponentName.STUDY_PROGRAM,
-        ComponentName.COURSE,
-        ComponentName.PROFESSOR,
-        ComponentName.CURRICULUM,
-        ComponentName.PREREQUISITE,
-        ComponentName.TEACHES,
-    ]
+        await DatabaseMixin.clear_database(db)
 
-    node_components = list(filter(lambda x: ComponentName.get_component_type(x) == ComponentType.NODE, component_names))
-    relationship_components = list(filter(lambda x: ComponentName.get_component_type(x) == ComponentType.RELATIONSHIP, component_names))
-    processing_tasks: dict[ComponentName, asyncio.Task] = {
-        component_name: asyncio.create_task(ProcessingMixin(component_name).run()) for component_name in component_names
-    }
+        components: list[Component] = [
+            Component(ComponentName.STUDY_PROGRAM, ComponentType.NODE),
+            Component(ComponentName.COURSE, ComponentType.NODE),
+            Component(ComponentName.PROFESSOR, ComponentType.NODE),
+            Component(ComponentName.CURRICULUM, ComponentType.RELATIONSHIP),
+            Component(ComponentName.PREREQUISITE, ComponentType.RELATIONSHIP),
+            Component(ComponentName.TEACHES, ComponentType.RELATIONSHIP)
+        ]
 
-    processing_tasks: dict[ComponentName, pd.DataFrame] = dict(
-        zip(processing_tasks.keys(), await asyncio.gather(*processing_tasks.values())))  # type: ignore
+        node_components: list[Component] = list(filter(lambda x: x.component_type == ComponentType.NODE, components))
+        relationship_components: list[Component] = list(filter(lambda x: x.component_type == ComponentType.RELATIONSHIP, components))
 
-    ingesting_tasks: dict[ComponentName, asyncio.Task] = {
-        component_name: asyncio.create_task(IngestingMixin(component_name).run(processing_tasks[component_name], db)) for component_name in
-        node_components
-    }
+        await process_and_ingest(node_components, db)
+        await process_and_ingest(relationship_components, db)
 
-    await asyncio.gather(*ingesting_tasks.values())
+    finally:
 
-    ingesting_tasks: dict[ComponentName, asyncio.Task] = {
-        component_name: asyncio.create_task(IngestingMixin(component_name).run(processing_tasks[component_name], db)) for component_name in
-        relationship_components
-    }
-
-    await asyncio.gather(*ingesting_tasks.values())
-
-    await DatabaseMixin.disconnect(db)
+        await DatabaseMixin.disconnect(db)
 
     logging.info(f"Time taken: {time.perf_counter() - start:.2f} seconds")
 

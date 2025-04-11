@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.enums import ComponentName
+from src.models.enums import ComponentName
 from src.patterns.strategy.processing.node_processing import StudyProgramProcessingStrategy, CourseProcessingStrategy, \
     ProfessorProcessingStrategy
 from src.patterns.strategy.processing.relationship_processing import CurriculumProcessingStrategy, PrerequisiteProcessingStrategy, \
