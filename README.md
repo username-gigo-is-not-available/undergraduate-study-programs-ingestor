@@ -20,13 +20,15 @@ In order to represent the relationships between the nodes, the application uses 
 
 #### Nodes
 
-- `StudyProgram(uid, name, duration, url, courses)`: represents a study program
-- `Course(uid, name_mk, name_en, prerequisite, taught_by)`: represents a course
-- `Professor(uid, name)`: represents a professor
+- `StudyProgram(uid, code, name, duration, url, offers(Course))`: represents a study program
+- `Course(uid, code, name_mk, name_en, offered_by(StudyProgram), is_prerequisite_for(Course), has_prerequisite(Course), taught_by(Professor))`:
+  represents a course
+- `Professor(uid, name, surname, teaches(Course))`: represents a professor
 
 #### Relationships
 
-- `Curriculum(level, type, semester, season, academic_year)`: connects a study program with a course
+- `StudyProgramOffersCourse/CourseOfferedByStudyProgram(level, type, semester, semester_season, academic_year)`: connects a study program
+  with a course
 - `Prerequisite(type, number_of_courses)`: connects a course with another course
 - `TaughtBy()`: connects a course with a professor
 
@@ -39,7 +41,6 @@ In order to represent the relationships between the nodes, the application uses 
 Before running the ingestor, make sure to set the following environment variables:
 
 - `FILE_STORAGE_TYPE`: the type of storage to use (either `LOCAL` or `MINIO`)
-- `INPUT_FILE_NAME`: the name of the input file
 - `MAX_WORKERS`: the maximum number of workers to use
 
 ##### Neo4j
@@ -66,6 +67,8 @@ Before running the ingestor, make sure to set the following environment variable
 - `DATABASE_RETRY_DELAY`: the delay between retries of a transaction to the Neo4j database
 - `DATABASE_RETRY_EXPONENT_BASE`: the base of the exponential backoff for retries of a transaction to the Neo4j database
 
+#### File Storage
+
 ##### If running the application with local storage:
 
 - `INPUT_DIRECTORY_PATH`: the path to the directory where the input files are stored
@@ -76,6 +79,18 @@ Before running the ingestor, make sure to set the following environment variable
 - `MINIO_ACCESS_KEY`: the access key of the MinIO server
 - `MINIO_SECRET_KEY`: the secret key of the MinIO server
 - `MINIO_SOURCE_BUCKET_NAME`: the name of the bucket where the input files are stored
+
+##### Dataset Paths
+
+- `STUDY_PROGRAMS_INPUT_DATA_FILE_NAME`: the name of the file containing the study programs data
+- `COURSES_INPUT_DATA_FILE_NAME`: the name of the file containing the courses data
+- `PROFESSORS_INPUT_DATA_FILE_NAME`: the name of the file containing the professors data
+- `CURRICULA_INPUT_DATA_FILE_NAME`: the name of the file containing the curricula data -
+  this file contains the courses offered by each study program
+- `COURSES_PREREQUISITES_INPUT_DATA_FILE_NAME`: the name of the file containing the courses prerequisites data -
+  this file contains the courses that are prerequisites for other courses
+- `TAUGHT_BY_INPUT_DATA_FILE_NAME`: the name of the file containing the courses taught by data -
+  this file contains the courses that are taught by professors
 
 ## Installation
 
