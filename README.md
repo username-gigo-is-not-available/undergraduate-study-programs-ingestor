@@ -41,7 +41,6 @@ In order to represent the relationships between the nodes, the application uses 
 Before running the ingestor, make sure to set the following environment variables:
 
 - `FILE_STORAGE_TYPE`: the type of storage to use (either `LOCAL` or `MINIO`)
-- `MAX_WORKERS`: the maximum number of workers to use
 
 ##### Neo4j
 
