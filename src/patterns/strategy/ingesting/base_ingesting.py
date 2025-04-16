@@ -2,25 +2,25 @@ import logging
 
 import pandas as pd
 from neo4j.exceptions import TransientError
-from neomodel.async_.core import AsyncDatabase
 from neomodel import db
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
+from src.clients import Neo4jClient
 from src.config import Config
 from src.models.enums import ComponentType
 
 
 class BaseIngestingStrategy:
     @classmethod
-    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], db: AsyncDatabase, *args, **kwargs) -> None:
+    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], *args, **kwargs) -> None:
         pass
 
     @classmethod
-    async def drop_index(cls, db: AsyncDatabase) -> None:
+    async def drop_index(cls) -> None:
         pass
 
     @classmethod
-    async def create_index(cls, db: AsyncDatabase) -> None:
+    async def create_index(cls) -> None:
         pass
 
     @classmethod
@@ -29,14 +29,12 @@ class BaseIngestingStrategy:
                                         exp_base=Config.DATABASE_RETRY_EXPONENT_BASE),
            retry=retry_if_exception_type(TransientError))
     @db.transaction
-    async def process(cls, df: pd.DataFrame, db: AsyncDatabase) -> None:
-        await cls.write(df.to_dict(orient="records"), df.columns, db)
+    async def process(cls, df: pd.DataFrame) -> None:
+        await cls.write(df.to_dict(orient="records"), df.columns)
 
     @classmethod
-    async def run(cls, df: pd.DataFrame, db: AsyncDatabase) -> None:
-        await cls.drop_index(db)
-        await cls.process(df, db)
-        await cls.create_index(db)
+    async def run(cls, df: pd.DataFrame) -> None:
+        await cls.process(df)
 
 
 class NodeIngestingStrategy(BaseIngestingStrategy):
@@ -44,24 +42,9 @@ class NodeIngestingStrategy(BaseIngestingStrategy):
     NODE_LABEL: str = None
     INDEX_COLUMN: str = None
 
-    @classmethod
-    async def drop_index(cls, db: AsyncDatabase) -> None:
-        cypher: str = f"""
-            DROP INDEX {cls.NODE_LABEL.lower()}_{cls.INDEX_COLUMN}_index IF EXISTS
-            """
-        logging.info(f"Dropping index for {cls.NODE_LABEL} nodes")
-        await db.cypher_query(cypher)
 
     @classmethod
-    async def create_index(cls, db: AsyncDatabase) -> None:
-        cypher: str = f"""
-            CREATE INDEX {cls.NODE_LABEL.lower()}_{cls.INDEX_COLUMN}_index IF NOT EXISTS FOR (n:{cls.NODE_LABEL}) on (n.{cls.INDEX_COLUMN}) 
-            """
-        logging.info(f"Creating index for {cls.NODE_LABEL} nodes")
-        await db.cypher_query(cypher)
-
-    @classmethod
-    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], db: AsyncDatabase, *args, **kwargs) -> None:
+    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], *args, **kwargs) -> None:
         logging.info(f"Created nodes: {rows}")
 
         create_clause: str = f"""
@@ -77,8 +60,10 @@ class NodeIngestingStrategy(BaseIngestingStrategy):
             {create_clause}
             {set_clause}
             """
-
-        return await db.cypher_query(cypher, {"rows": rows})
+        await Neo4jClient.drop_index(index_name=f"{cls.NODE_LABEL.lower()}_{cls.INDEX_COLUMN}_index")
+        await Neo4jClient.execute_cypher(cypher, {"rows": rows})
+        await Neo4jClient.create_index(index_name=f"{cls.NODE_LABEL.lower()}_{cls.INDEX_COLUMN}_index",
+                                       column_name=cls.INDEX_COLUMN, model_name=cls.NODE_LABEL)
 
 
 class RelationshipIngestingStrategy(BaseIngestingStrategy):
@@ -91,7 +76,7 @@ class RelationshipIngestingStrategy(BaseIngestingStrategy):
     TARGET_NODE_COLUMN: str = None
 
     @classmethod
-    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], db: AsyncDatabase, *args, **kwargs) -> None:
+    async def write(cls, rows: list[dict[str, str | int]], columns: list[str], *args, **kwargs) -> None:
         logging.info(f"Created relationships: {rows}")
 
         set_columns = set(columns) - {cls.SOURCE_NODE_COLUMN, cls.TARGET_NODE_COLUMN}
@@ -117,5 +102,4 @@ class RelationshipIngestingStrategy(BaseIngestingStrategy):
             {create_clause}
             {set_clause}
             """
-
-        return await db.cypher_query(cypher, {"rows": rows})
+        await Neo4jClient.execute_cypher(cypher, {"rows": rows})

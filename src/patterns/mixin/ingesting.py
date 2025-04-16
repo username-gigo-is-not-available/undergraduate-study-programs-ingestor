@@ -1,10 +1,11 @@
 import pandas as pd
-from neomodel.async_.core import AsyncDatabase
 
 from src.models.enums import ComponentName
-from src.patterns.strategy.ingesting.node_ingesting import StudyProgramDataIngestingStrategy, CourseDataIngestingStrategy, \
+from src.patterns.strategy.ingesting.node_ingesting import StudyProgramDataIngestingStrategy, \
+    CourseDataIngestingStrategy, \
     ProfessorDataIngestingStrategy
-from src.patterns.strategy.ingesting.relationship_ingesting import CurriculumDataIngestingStrategy, PrerequisiteDataIngestingStrategy, \
+from src.patterns.strategy.ingesting.relationship_ingesting import CurriculumDataIngestingStrategy, \
+    PrerequisiteDataIngestingStrategy, \
     TeachesDataIngestingStrategy
 
 
@@ -25,5 +26,5 @@ class IngestingMixin:
         else:
             raise ValueError(f"Unsupported component name: {component_name}")
 
-    async def run(self, df: pd.DataFrame, db: AsyncDatabase) -> None:
-        await self.ingesting_strategy.run(df, db)
+    async def run(self, df: pd.DataFrame) -> None:
+        await self.ingesting_strategy.run(df)

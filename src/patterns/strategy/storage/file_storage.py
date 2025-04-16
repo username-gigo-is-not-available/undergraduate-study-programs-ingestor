@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 from minio import S3Error
 
+from src.clients import MinioClient
 from src.config import Config
 
 
@@ -30,7 +31,7 @@ class MinioFileStorage(FileStorageStrategy):
 
     def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
-            csv_bytes: bytes = Config.MINIO_CLIENT.get_object(str(Config.MINIO_SOURCE_BUCKET_NAME), str(input_file_name)).read()
+            csv_bytes: bytes = MinioClient.connect().get_object(str(Config.MINIO_SOURCE_BUCKET_NAME), str(input_file_name)).read()
             csv_buffer: BytesIO = BytesIO(csv_bytes)
             return pd.read_csv(csv_buffer)
         except S3Error as e:
