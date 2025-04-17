@@ -7,9 +7,10 @@ import pandas as pd
 from pandas.core.groupby import DataFrameGroupBy
 
 from src.config import Config
+from src.patterns.mixin.file_storage import FileStorageMixin
 
 
-class BaseProcessingStrategy:
+class BaseProcessingStrategy():
     COLUMNS: list[str] = []
     COLUMN_MAPPING: dict[str, str] = {}
     PREDICATE: callable = None
@@ -17,8 +18,7 @@ class BaseProcessingStrategy:
 
     @classmethod
     async def select(cls, drop_duplicates: bool = True) -> pd.DataFrame:
-        df: pd.DataFrame = (pd.read_csv(Config.INPUT_DIRECTORY_PATH / cls.PATH)[cls.COLUMNS]
-                            .rename(columns=cls.COLUMN_MAPPING))
+        df: pd.DataFrame  = FileStorageMixin().read_data(cls.PATH)[cls.COLUMNS].rename(columns=cls.COLUMN_MAPPING)
         return df.drop_duplicates() if drop_duplicates else df
 
     @classmethod
