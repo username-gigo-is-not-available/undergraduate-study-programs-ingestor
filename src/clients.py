@@ -85,7 +85,7 @@ class Neo4jClient:
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             cypher: str = f"""
-                CREATE INDEX {index_name} IF NOT EXISTS FOR(n:{model_name}) ON (n:{column_name})
+                CREATE INDEX {index_name} IF NOT EXISTS FOR (n:{model_name}) ON (n:{column_name})
                 """
             logging.info(f"Creating index {index_name} on model {model_name} and column {column_name}")
             await neo4j.cypher_query(cypher)
