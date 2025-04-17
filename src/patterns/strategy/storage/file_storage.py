@@ -4,7 +4,8 @@ from pathlib import Path
 
 import aiohttp
 import pandas as pd
-from minio import S3Error
+from aiohttp import ClientResponse
+from miniopy_async import S3Error, Minio
 
 from src.clients import MinioClient
 from src.config import Config
@@ -33,8 +34,13 @@ class MinioFileStorage(FileStorageStrategy):
     async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
             async with aiohttp.ClientSession() as session:
-                csv_bytes: bytes = MinioClient.connect().get_object(str(Config.MINIO_SOURCE_BUCKET_NAME),
-                                                                    str(input_file_name), session).read()
+                minio: Minio = MinioClient.connect()
+                response: ClientResponse = await minio.get_object(
+                    bucket_name=Config.MINIO_SOURCE_BUCKET_NAME,
+                    object_name=str(input_file_name),
+                    session=session,
+                )
+                csv_bytes: bytes = await response.read()
                 csv_buffer: BytesIO = BytesIO(csv_bytes)
             return pd.read_csv(csv_buffer)
         except S3Error as e:
