@@ -15,5 +15,5 @@ class FileStorageMixin:
         else:
             raise ValueError(f"Unsupported storage type: {Config.FILE_STORAGE_TYPE}")
 
-    def read_data(self, input_file_name: Path) -> pd.DataFrame:
-        return self.file_storage_strategy.read_data(input_file_name)
+    async def read_data(self, input_file_name: Path) -> pd.DataFrame:
+        return await self.file_storage_strategy.read_data(input_file_name)

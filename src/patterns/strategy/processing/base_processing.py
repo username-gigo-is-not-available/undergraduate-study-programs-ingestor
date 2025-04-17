@@ -1,12 +1,7 @@
-import logging
-import os
 from pathlib import Path
-from typing import Hashable
 
 import pandas as pd
-from pandas.core.groupby import DataFrameGroupBy
 
-from src.config import Config
 from src.patterns.mixin.file_storage import FileStorageMixin
 
 
@@ -18,7 +13,8 @@ class BaseProcessingStrategy():
 
     @classmethod
     async def select(cls, drop_duplicates: bool = True) -> pd.DataFrame:
-        df: pd.DataFrame  = FileStorageMixin().read_data(cls.PATH)[cls.COLUMNS].rename(columns=cls.COLUMN_MAPPING)
+        df: pd.DataFrame = await FileStorageMixin().read_data(cls.PATH)
+        df: pd.DataFrame  = df[cls.COLUMNS].rename(columns=cls.COLUMN_MAPPING)
         return df.drop_duplicates() if drop_duplicates else df
 
     @classmethod

@@ -10,13 +10,13 @@ from src.config import Config
 
 
 class FileStorageStrategy:
-    def read_data(self, input_file_name: Path) -> pd.DataFrame:
+    async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         raise NotImplementedError
 
 
 class LocalFileStorage(FileStorageStrategy):
 
-    def read_data(self, input_file_name: Path) -> pd.DataFrame:
+    async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
             return pd.read_csv(Config.INPUT_DIRECTORY_PATH / input_file_name)
         except FileNotFoundError as e:
@@ -29,7 +29,7 @@ class LocalFileStorage(FileStorageStrategy):
 
 class MinioFileStorage(FileStorageStrategy):
 
-    def read_data(self, input_file_name: Path) -> pd.DataFrame:
+    async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
             csv_bytes: bytes = MinioClient.connect().get_object(str(Config.MINIO_SOURCE_BUCKET_NAME), str(input_file_name)).read()
             csv_buffer: BytesIO = BytesIO(csv_bytes)
