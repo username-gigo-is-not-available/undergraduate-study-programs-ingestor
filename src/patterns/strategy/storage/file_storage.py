@@ -2,6 +2,7 @@ import logging
 from io import BytesIO
 from pathlib import Path
 
+import aiohttp
 import pandas as pd
 from minio import S3Error
 
@@ -31,10 +32,11 @@ class MinioFileStorage(FileStorageStrategy):
 
     async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
-            csv_bytes: bytes = MinioClient.connect().get_object(str(Config.MINIO_SOURCE_BUCKET_NAME), str(input_file_name)).read()
-            csv_buffer: BytesIO = BytesIO(csv_bytes)
+            async with aiohttp.ClientSession() as session:
+                csv_bytes: bytes = MinioClient.connect().get_object(str(Config.MINIO_SOURCE_BUCKET_NAME),
+                                                                    str(input_file_name), session).read()
+                csv_buffer: BytesIO = BytesIO(csv_bytes)
             return pd.read_csv(csv_buffer)
         except S3Error as e:
             logging.error(f"Failed to read data from MinIO bucket {Config.MINIO_SOURCE_BUCKET_NAME}: {e}")
             raise
-

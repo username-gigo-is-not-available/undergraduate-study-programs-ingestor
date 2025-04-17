@@ -6,3 +6,4 @@ python-dotenv==1.0.1
 miniopy-async==1.22.1
 typing-extensions==4.13.2
 neo4j==5.26.0
+aiohttp==3.11.16
