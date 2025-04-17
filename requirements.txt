@@ -3,4 +3,6 @@ minio==7.2.9
 tenacity==9.0.0
 pandas==2.2.3
 python-dotenv==1.0.1
+miniopy-async==1.22.1
+typing-extensions==4.13.2
 neo4j==5.26.0
