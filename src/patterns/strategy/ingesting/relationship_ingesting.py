@@ -22,7 +22,7 @@ class PrerequisiteDataIngestingStrategy(RelationshipIngestingStrategy):
 class TeachesDataIngestingStrategy(RelationshipIngestingStrategy):
     SOURCE_TARGET_RELATIONSHIP_PROPERTY_NAME = 'TEACHES'
     TARGET_SOURCE_RELATIONSHIP_PROPERTY_NAME = 'TAUGHT_BY'
-    SOURCE_NODE_LABEL: str = "Course"
-    TARGET_NODE_LABEL: str = "Professor"
-    SOURCE_NODE_COLUMN: str = "course_id"
-    TARGET_NODE_COLUMN: str = "professor_id"
+    SOURCE_NODE_LABEL: str = "Professor"
+    TARGET_NODE_LABEL: str = "Course"
+    SOURCE_NODE_COLUMN: str = "professor_id"
+    TARGET_NODE_COLUMN: str = "course_id"
