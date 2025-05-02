@@ -11,7 +11,7 @@ class CurriculumDataIngestingStrategy(RelationshipIngestingStrategy):
 
 
 class PrerequisiteDataIngestingStrategy(RelationshipIngestingStrategy):
-    SOURCE_TARGET_RELATIONSHIP_PROPERTY_NAME = 'HAS_PREREQUISITE'
+    SOURCE_TARGET_RELATIONSHIP_PROPERTY_NAME = 'HAS_PREREQUISITE_FOR'
     TARGET_SOURCE_RELATIONSHIP_PROPERTY_NAME = 'IS_PREREQUISITE_FOR'
     SOURCE_NODE_LABEL: str = "Course"
     TARGET_NODE_LABEL: str = "Course"

@@ -21,7 +21,7 @@ In order to represent the relationships between the nodes, the application uses 
 #### Nodes
 
 - `StudyProgram(uid, code, name, duration, url, offers(Course))`: represents a study program
-- `Course(uid, code, name_mk, name_en, offered_by(StudyProgram), is_prerequisite_for(Course), has_prerequisite(Course), taught_by(Professor))`:
+- `Course(uid, code, name_mk, name_en, offered_by(StudyProgram), is_prerequisite_for(Course), has_prerequisite_for(Course), taught_by(Professor))`:
   represents a course
 - `Professor(uid, name, surname, teaches(Course))`: represents a professor
 
