@@ -18,9 +18,9 @@ class Config:
     STUDY_PROGRAMS_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get("STUDY_PROGRAMS_INPUT_DATA_FILE_NAME"))
     COURSES_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('COURSES_INPUT_DATA_FILE_NAME'))
     PROFESSORS_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('PROFESSORS_INPUT_DATA_FILE_NAME'))
-    CURRICULA_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('CURRICULA_INPUT_DATA_FILE_NAME'))
-    TAUGHT_BY_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('TAUGHT_BY_INPUT_DATA_FILE_NAME'))
-    PREREQUISITES_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('PREREQUISITES_INPUT_DATA_FILE_NAME'))
+    OFFERS_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('OFFERS_INPUT_DATA_FILE_NAME'))
+    REQUIRES_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('REQUIRES_INPUT_DATA_FILE_NAME'))
+    TEACHES_INPUT_DATA_FILE_NAME: Path = Path(ENVIRONMENT_VARIABLES.get('TEACHES_INPUT_DATA_FILE_NAME'))
 
     DATABASE_USER: str = ENVIRONMENT_VARIABLES.get("DATABASE_USER")
     DATABASE_PASSWORD: str = ENVIRONMENT_VARIABLES.get("DATABASE_PASSWORD")
@@ -57,7 +57,8 @@ class Config:
         'professor_name',
         'professor_surname'
     ]
-    CURRICULUM_COLUMNS: list[str] = [
+    OFFERS_COLUMNS: list[str] = [
+        'offers_id',
         'study_program_id',
         'course_id',
         'course_type',
@@ -66,13 +67,15 @@ class Config:
         'course_academic_year',
         'course_level',
     ]
-    PREREQUISITE_COLUMNS: list[str] = [
+    REQUIRES_COLUMNS: list[str] = [
+        'requires_id',
         'course_id',
         'course_prerequisite_type',
         'course_prerequisite_id',
         'minimum_required_number_of_courses'
     ]
     TEACHES_COLUMNS: list[str] = [
+        'teaches_id',
         "course_id",
         "professor_id"
     ]
@@ -96,7 +99,8 @@ class Config:
         "professor_name": "name",
         "professor_surname": "surname"
     }
-    CURRICULUM_COLUMN_MAPPING: dict[str, str] = {
+    OFFERS_COLUMN_MAPPING: dict[str, str] = {
+        'offers_id': 'uid',
         'study_program_id': 'study_program_id',
         'course_id': 'course_id',
         'course_level': 'level',
@@ -105,13 +109,15 @@ class Config:
         'course_semester_season': 'semester_season',
         'course_academic_year': 'academic_year',
     }
-    PREREQUISITE_COLUMN_MAPPING: dict[str, str] = {
+    REQUIRES_COLUMN_MAPPING: dict[str, str] = {
+        'requires_id': 'uid',
         'course_id': 'course_id',
         'course_prerequisite_id': 'course_prerequisite_id',
         'course_prerequisite_type': 'type',
         'minimum_required_number_of_courses': 'number_of_courses'
     }
     TEACHES_COLUMN_MAPPING: dict[str, str] = {
+        'teaches_id': 'uid',
         "course_id": "course_id",
         "professor_id": "professor_id"
     }

@@ -20,4 +20,3 @@ class ProfessorProcessingStrategy(BaseProcessingStrategy):
     PATH: Path = Config.PROFESSORS_INPUT_DATA_FILE_NAME
     COLUMNS: list[str] = Config.PROFESSOR_COLUMNS
     COLUMN_MAPPING: dict[str, str] = Config.PROFESSOR_COLUMN_MAPPING
-    PREDICATE: callable = lambda df: df['uid'] != 58

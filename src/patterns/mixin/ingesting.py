@@ -4,8 +4,8 @@ from src.models.enums import ComponentName
 from src.patterns.strategy.ingesting.node_ingesting import StudyProgramDataIngestingStrategy, \
     CourseDataIngestingStrategy, \
     ProfessorDataIngestingStrategy
-from src.patterns.strategy.ingesting.relationship_ingesting import CurriculumDataIngestingStrategy, \
-    PrerequisiteDataIngestingStrategy, \
+from src.patterns.strategy.ingesting.relationship_ingesting import OffersDataIngestingStrategy, \
+    RequiresDataIngestingStrategy, \
     TeachesDataIngestingStrategy
 
 
@@ -18,9 +18,9 @@ class IngestingMixin:
         elif component_name == ComponentName.PROFESSOR:
             self.ingesting_strategy = ProfessorDataIngestingStrategy()
         elif component_name == ComponentName.CURRICULUM:
-            self.ingesting_strategy = CurriculumDataIngestingStrategy()
+            self.ingesting_strategy = OffersDataIngestingStrategy()
         elif component_name == ComponentName.PREREQUISITE:
-            self.ingesting_strategy = PrerequisiteDataIngestingStrategy()
+            self.ingesting_strategy = RequiresDataIngestingStrategy()
         elif component_name == ComponentName.TEACHES:
             self.ingesting_strategy = TeachesDataIngestingStrategy()
         else:
