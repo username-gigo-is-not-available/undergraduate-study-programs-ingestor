@@ -1,19 +1,17 @@
-from pathlib import Path
-
 import pandas as pd
 
-from src.config import Config
-from src.patterns.strategy.storage.file_storage import LocalFileStorage, MinioFileStorage
+from src.configurations import StorageConfiguration, DatasetConfiguration
+from src.patterns.strategy.file_storage import LocalFileStorage, MinioFileStorage
 
 
 class FileStorageMixin:
     def __init__(self):
-        if Config.FILE_STORAGE_TYPE == 'LOCAL':
+        if StorageConfiguration.FILE_STORAGE_TYPE == 'LOCAL':
             self.file_storage_strategy = LocalFileStorage()
-        elif Config.FILE_STORAGE_TYPE == 'MINIO':
+        elif StorageConfiguration.FILE_STORAGE_TYPE == 'MINIO':
             self.file_storage_strategy = MinioFileStorage()
         else:
-            raise ValueError(f"Unsupported storage type: {Config.FILE_STORAGE_TYPE}")
+            raise ValueError(f"Unsupported storage type: {StorageConfiguration.FILE_STORAGE_TYPE}")
 
-    async def read_data(self, input_file_name: Path) -> pd.DataFrame:
-        return await self.file_storage_strategy.read_data(input_file_name)
+    async def read_data(self, configuration: DatasetConfiguration) -> pd.DataFrame:
+       return await self.file_storage_strategy.read_data(configuration.input_io_config.file_name)
