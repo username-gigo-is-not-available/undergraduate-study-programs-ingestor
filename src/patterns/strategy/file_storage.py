@@ -33,6 +33,7 @@ class MinioFileStorage(FileStorageStrategy):
 
     async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         try:
+            input_file_name: str = str(input_file_name)
             async with aiohttp.ClientSession() as session:
                 minio: Minio = MinioClient.connect()
                 response: ClientResponse = await minio.get_object(
