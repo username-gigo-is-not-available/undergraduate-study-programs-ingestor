@@ -8,29 +8,225 @@ which can be found at the following [URL](https://finki.ukim.mk/mk/dodiplomski-s
 ## Prerequisites
 
 - Data from
-  the [undergraduate-study-program-etl](https://github.com/username-gigo-is-not-available/undergraduate-study-programs-etl) is
+  the [undergraduate-study-program-validator](https://github.com/username-gigo-is-not-available/undergraduate-study-programs-validator) is
   required to run this application.
 
 ## Overview
 
-The Ingestor application is used to map and load the data from the etl application to nodes and relationships in a Neo4j database.
+The Ingestor application is used to map and load the data from the validator application to nodes and relationships in a Neo4j database.
 In order to represent the relationships between the nodes, the application uses the following data model.
 
 ### Data Model
 
 #### Nodes
 
-- `StudyProgram(uid, code, name, duration, url, offers(Course))`: represents a study program
-- `Course(uid, code, name_mk, name_en, offered_by(StudyProgram), is_prerequisite_for(Course), has_prerequisite_for(Course), taught_by(Professor))`:
+- `StudyProgram(uid, code, name, duration, url, offers(Curriculum))`: represents a study program
+- `Course(uid, code, name_mk, name_en, level, included_by(Curriculum), is_prerequisite_for(Requisite), is_postrequisite_for(Requisite), taught_by(Professor))`:
   represents a course
 - `Professor(uid, name, surname, teaches(Course))`: represents a professor
+- `Curriculum(uid, type, semester_season, academic_year, semester, offered_by(StudyProgram), includes(Course))`: represents a curriculum
+- `Requisite(uid, type, minimum_number_of_courses_required, requires_prerequisite(Course), requires_postrequisite(Course))`: represents a requisite
 
 #### Relationships
 
-- `StudyProgramOffersCourse/CourseOfferedByStudyProgram(level, type, semester, semester_season, academic_year)`: connects a study program
-  with a course
-- `Prerequisite(type, number_of_courses)`: connects a course with another course
-- `TaughtBy()`: connects a course with a professor
+- `OFFERS`: connects a study program with a curriculum
+- `INCLUDES`: connects a curriculum with a course
+- `PREREQUISITES`: connects a course with a requisite
+- `POSTREQUISITES`: connects a course with a requisite
+- `TEACHES`: connects a professor with a course
+
+### Partitioning Strategy 
+
+To enable safe and efficient parallel ingestion of relationships,  each record is assigned a `partition_uid` based on the last 
+character of the source and destination `UUID`s (e.g., "a-7"). These identifiers are then grouped into batches using a wrap-around strategy: 
+for each batch `i`, we include all partition pairs (`k-j`) where `k = (i + j) % N` and `N` is the number of partitions.
+This ensures that each batch accesses disjoint node subsets and reduces the likelihood of lock contention in Neo4j, 
+especially for skewed datasets where many relationships target the same nodes.
+
+### Pipeline:
+
+#### Study Program:
+
+##### Load
+
+- Load the study programs data (output from the validator) with the following columns:
+  `study_program_id`, `study_program_code`, `study_program_name`, `study_program_duration`, `study_program_url`
+
+##### Rename
+
+- Drop `study_program` prefix in all columns
+
+##### Ingest
+
+- Create study program nodes with columns (`uid`, `code`, `name`, `duration`, `url`)
+
+#### Course:
+
+##### Load
+
+- Load the courses data (output from the validator) with the following columns:
+  `course_id`, `course_code`, `course_name_mk`, `course_name_en`, `course_url`, `course_level`
+
+##### Rename
+
+- Drop `course` prefix in all columns
+
+##### Ingest
+
+- Create course nodes with columns (`uid`, `code`, `name_mk`, `name_en`, `url`, `level`)
+
+#### Professor:
+
+##### Load
+
+- Load the professors data (output from the validator) with the following columns:
+  `professor_id`, `professor_name`, `professor_surname`
+
+##### Rename
+
+- Drop `professor` prefix in all columns
+
+##### Ingest
+
+- Create professor nodes with columns (`uid`, `name`, `surname`)
+
+
+#### Curriculum:
+
+##### Load
+
+- Load the curricula data (output from the validator) with the following columns:
+  `curriculum_id`, `course_type`, `course_semester`, `course_semester_season`, `course_academic_year`
+- 
+##### Rename
+
+- Drop `course` and `curriculum` prefix in all columns
+
+##### Ingest
+
+- Create curriculum nodes with columns (`uid`, `type`, `semester`, `semester_season`, `academic_year`)
+
+#### Requisite:
+
+##### Load
+
+- Load the offers data (output from the validator) with the following columns:
+  `requisite_id`, `course_prerequisite_type`, `minimum_required_number_of_courses`,
+
+##### Rename
+
+- Rename `requisite_id` to `uid`, `course_prerequisite_type` to `type`
+
+##### Ingest
+
+- Create requisite nodes with columns (`uid`, `type`, `minimum_required_number_of_courses`)
+
+#### Offers:
+
+##### Load
+
+- Load the teaches data (output from the validator) with the following columns:
+  `offers_id`, `curriculum_id`, `study_program_id`
+
+##### Rename
+
+- Rename `offers_id` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `curriculum_id` and `study_program_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `OFFERS` relationships from `StudyProgram` nodes to `Curriculum` nodes 
+  by matching on the `uid` column
+
+#### Includes:
+
+- Load the teaches data (output from the validator) with the following columns:
+  `includes_id`, `curriculum_id`, `course_id`
+
+##### Rename
+
+- Rename `includes` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `curriculum_id` and `course_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `INCLUDES` relationships from `Curriculum` nodes to `Course` nodes 
+  by matching on the `uid` column
+
+#### Prerequisites:
+
+##### Load
+
+- Load the prerequisite data (output from the validator) with the following columns:
+  `prerequisite_id`, `requisite_id`, `prerequisite_course_id`
+
+##### Rename
+
+- Rename `prerequisite_id` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `prerequisite_course_id` and `requisite_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `PREREQUISITE` relationships from `Course` nodes to `Requisite` nodes 
+  by matching on the `uid` column
+
+
+#### Postrequisites:
+
+##### Load
+
+- Load the prerequisite data (output from the validator) with the following columns:
+  `postrequisite_id`, `requisite_id`, `course_id`
+
+##### Rename
+
+- Rename `postrequisite_id` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `course_id` and `requisite_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `postrequisite_id` relationships from `Course` nodes to `Requisite` nodes 
+  by matching on the `uid` column
+
+#### Teaches:
+
+- Load the teaches data (output from the validator) with the following columns:
+  `teaches_id`, `course_id`, `professor_id`
+
+##### Rename
+
+- Rename `teaches_id` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `professor_id` and `course_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `teaches_id` relationships from `Professor` nodes to `Course` nodes 
+  by matching on the `uid` column
 
 ## Requirements
 
@@ -41,6 +237,7 @@ In order to represent the relationships between the nodes, the application uses 
 Before running the ingestor, make sure to set the following environment variables:
 
 - `FILE_STORAGE_TYPE`: the type of storage to use (either `LOCAL` or `MINIO`)
+- `NUMBER_OF_PARTITIONS`: how many partitions should be created for the ingestion of relationships
 
 ##### Neo4j
 
@@ -81,15 +278,17 @@ Before running the ingestor, make sure to set the following environment variable
 
 ##### Dataset Paths
 
-- `STUDY_PROGRAMS_INPUT_DATA_FILE_NAME`: the name of the file containing the study programs data
-- `COURSES_INPUT_DATA_FILE_NAME`: the name of the file containing the courses data
-- `PROFESSORS_INPUT_DATA_FILE_NAME`: the name of the file containing the professors data
-- `CURRICULA_INPUT_DATA_FILE_NAME`: the name of the file containing the curricula data -
-  this file contains the courses offered by each study program
-- `COURSES_PREREQUISITES_INPUT_DATA_FILE_NAME`: the name of the file containing the courses prerequisites data -
-  this file contains the courses that are prerequisites for other courses
-- `TAUGHT_BY_INPUT_DATA_FILE_NAME`: the name of the file containing the courses taught by data -
-  this file contains the courses that are taught by professors
+- `STUDY_PROGRAMS_DATA_INPUT_FILE_NAME`: the name of the study_programs input file
+- `COURSE_DATA_INPUT_FILE_NAME`: the name of the courses input file
+- `PROFESSORS_DATA_INPUT_FILE_NAME`: the name of the professors input file
+- `CURRICULA_DATA_INPUT_FILE_NAME`: the name of the curricula input file
+- `REQUISITES_DATA_INPUT_FILE_NAME`: the name of the requisites input file
+- `OFFERS_DATA_INPUT_FILE_NAME`: the name of the offers input file
+- `INCLUDES_DATA_INPUT_FILE_NAME`: the name of the includes input file
+- `PREREQUISITES_DATA_INPUT_FILE_NAME`: the name of the prerequisites input file
+- `POSTREQUISITES_DATA_INPUT_FILE_NAME`: the name of the postrequisites input file
+- `TEACHES_DATA_INPUT_FILE_NAME`: the name of the teaches input file
+
 
 ## Installation
 

@@ -2,27 +2,21 @@ import asyncio
 import logging
 import time
 
-import pandas as pd
-from neomodel.async_.core import AsyncDatabase
-
-from src.models.enums import ComponentType, ComponentName
-from src.models.models import Component
+from src.configurations import NodeIngestionConfiguration, RelationshipIngestionConfiguration
+from src.ingestor.courses_ingestor import courses_ingestor
+from src.ingestor.curricula_ingestor import curricula_ingestor
+from src.ingestor.includes_ingestor import includes_ingestor
+from src.ingestor.offers_ingestor import offers_ingestor
+from src.ingestor.postrequisites_ingestor import postrequisites_ingestor
+from src.ingestor.prerequisites_ingestor import prerequisites_ingestor
+from src.ingestor.professors_ingestor import professors_ingestor
+from src.ingestor.requisite_ingestor import requisites_ingestor
+from src.ingestor.study_programs_ingestor import study_programs_ingestor
+from src.ingestor.teaches_ingestor import teaches_ingestor
 from src.clients import Neo4jClient
-from src.patterns.mixin.ingesting import IngestingMixin
-from src.patterns.mixin.processing import ProcessingMixin
+from src.patterns.builder.pipeline import Pipeline
 
 logging.basicConfig(level=logging.INFO)
-
-
-async def process_and_ingest(components: list[Component]) -> None:
-    processing_tasks: dict[Component, asyncio.Task] = {
-        component: asyncio.create_task(ProcessingMixin(component.component_name).run()) for component in components
-    }
-    data: dict[Component, pd.DataFrame] = dict(zip(processing_tasks.keys(), await asyncio.gather(*processing_tasks.values())))
-    ingesting_tasks: dict[Component, asyncio.Task] = {
-        component: asyncio.create_task(IngestingMixin(component.component_name).run(data[component])) for component in components
-    }
-    await asyncio.gather(*ingesting_tasks.values())
 
 
 async def main():
@@ -32,21 +26,47 @@ async def main():
     try:
 
         await Neo4jClient.clear_database()
+        await Neo4jClient.drop_constraints()
+        await Neo4jClient.drop_indices()
 
-        components: list[Component] = [
-            Component(ComponentName.STUDY_PROGRAM, ComponentType.NODE),
-            Component(ComponentName.COURSE, ComponentType.NODE),
-            Component(ComponentName.PROFESSOR, ComponentType.NODE),
-            Component(ComponentName.CURRICULUM, ComponentType.RELATIONSHIP),
-            Component(ComponentName.PREREQUISITE, ComponentType.RELATIONSHIP),
-            Component(ComponentName.TEACHES, ComponentType.RELATIONSHIP)
+        ingestion_configurations: list[NodeIngestionConfiguration | RelationshipIngestionConfiguration] = [
+            NodeIngestionConfiguration.STUDY_PROGRAMS,
+            NodeIngestionConfiguration.COURSES,
+            NodeIngestionConfiguration.PROFESSORS,
+            NodeIngestionConfiguration.CURRICULA,
+            NodeIngestionConfiguration.REQUISITES,
         ]
 
-        node_components: list[Component] = list(filter(lambda x: x.component_type == ComponentType.NODE, components))
-        relationship_components: list[Component] = list(filter(lambda x: x.component_type == ComponentType.RELATIONSHIP, components))
+        node_pipelines: list[Pipeline] = [
+            study_programs_ingestor(),
+            courses_ingestor(),
+            professors_ingestor(),
+            curricula_ingestor(),
+            requisites_ingestor()
+        ]
 
-        await process_and_ingest(node_components)
-        await process_and_ingest(relationship_components)
+        relationship_pipelines: list[Pipeline] = [
+            offers_ingestor(),
+            includes_ingestor(),
+            prerequisites_ingestor(),
+            postrequisites_ingestor(),
+            teaches_ingestor()
+        ]
+
+        node_ingestion_tasks: list[asyncio.Task[Pipeline]] = [asyncio.create_task(pipeline.build().run()) for pipeline
+                                                              in node_pipelines]
+        await asyncio.gather(*node_ingestion_tasks)
+
+        create_indices_tasks: list[asyncio.Task[None]] = [
+            asyncio.create_task(Neo4jClient.create_index(configuration.label, configuration.index_column)) for
+            configuration in ingestion_configurations]
+
+        await asyncio.gather(*create_indices_tasks)
+
+        relationship_ingestion_tasks: list[asyncio.Task[Pipeline]] = [asyncio.create_task(pipeline.build().run()) for
+                                                                      pipeline in relationship_pipelines]
+        await asyncio.gather(*relationship_ingestion_tasks)
+
 
     finally:
 
