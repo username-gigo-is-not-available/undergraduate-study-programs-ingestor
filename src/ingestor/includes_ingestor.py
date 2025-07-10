@@ -29,7 +29,7 @@ def includes_ingestor():
             PipelineStep(
                 name='rename-includes-columns',
                 function=PipelineStep.rename,
-                column_mapping=DatasetConfiguration.CURRICULA.transformation_config.column_mapping
+                column_mapping=DatasetConfiguration.INCLUDES.transformation_config.column_mapping
             )
         )
     )
