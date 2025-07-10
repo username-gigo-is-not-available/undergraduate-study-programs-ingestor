@@ -12,6 +12,12 @@ class CoursePrerequisiteType(UpperStrEnum):
     NONE: str = auto()
     TOTAL: str = auto()
 
+class StageType(UpperStrEnum):
+    LOAD = auto()
+    RENAME = auto()
+    PARTITION = auto()
+    INGEST = auto()
+    STORE = auto()
 
 class ComponentType(StrEnum):
     NODE: str = auto()
@@ -36,3 +42,15 @@ class ComponentName(StrEnum):
             ComponentName.PREREQUISITE: ComponentType.RELATIONSHIP,
             ComponentName.TEACHES: ComponentType.RELATIONSHIP,
         }[component_name]
+
+class DatasetType(UpperStrEnum):
+    STUDY_PROGRAMS: str = auto()
+    COURSES: str = auto()
+    PROFESSORS: str = auto()
+    CURRICULA: str = auto()
+    REQUISITES: str = auto()
+    OFFERS: str = auto()
+    INCLUDES: str = auto()
+    PREREQUISITES: str = auto()
+    POSTREQUISITES: str = auto()
+    TEACHES: str = auto()
