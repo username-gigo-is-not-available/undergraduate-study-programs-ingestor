@@ -6,16 +6,16 @@ from neomodel import config
 from neomodel.async_.core import AsyncDatabase
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
-from src.config import Config
+from src.configurations import StorageConfiguration
 
 
 class Neo4jClient:
-    DATABASE_URL: str = Config.DATABASE_CONNECTION_STRING
-    DATABASE_CONNECTION_ACQUISITION_TIMEOUT: str = Config.DATABASE_CONNECTION_ACQUISITION_TIMEOUT
-    DATABASE_CONNECTION_TIMEOUT: str = Config.DATABASE_CONNECTION_TIMEOUT
-    DATABASE_MAX_CONNECTION_LIFETIME: str = Config.DATABASE_MAX_CONNECTION_LIFETIME
-    DATABASE_MAX_CONNECTION_POOL_SIZE: int = Config.DATABASE_MAX_CONNECTION_POOL_SIZE
-    DATABASE_MAX_TRANSACTION_RETRY_TIME: int = Config.DATABASE_MAX_TRANSACTION_RETRY_TIME
+    DATABASE_URL: str = StorageConfiguration.DATABASE_CONNECTION_STRING
+    DATABASE_CONNECTION_ACQUISITION_TIMEOUT: str = StorageConfiguration.DATABASE_CONNECTION_ACQUISITION_TIMEOUT
+    DATABASE_CONNECTION_TIMEOUT: str = StorageConfiguration.DATABASE_CONNECTION_TIMEOUT
+    DATABASE_MAX_CONNECTION_LIFETIME: str = StorageConfiguration.DATABASE_MAX_CONNECTION_LIFETIME
+    DATABASE_MAX_CONNECTION_POOL_SIZE: int = StorageConfiguration.DATABASE_MAX_CONNECTION_POOL_SIZE
+    DATABASE_MAX_TRANSACTION_RETRY_TIME: int = StorageConfiguration.DATABASE_MAX_TRANSACTION_RETRY_TIME
     _instance: 'Neo4jClient' = None
 
     def __new__(cls, *args, **kwargs):
@@ -36,10 +36,10 @@ class Neo4jClient:
 
     @staticmethod
     @retry(
-        stop=stop_after_attempt(Config.DATABASE_RETRY_COUNT),
+        stop=stop_after_attempt(StorageConfiguration.DATABASE_RETRY_COUNT),
         wait=wait_random_exponential(
-            multiplier=Config.DATABASE_RETRY_MULTIPLIER_IN_SECONDS,
-            exp_base=Config.DATABASE_RETRY_EXPONENT_BASE,
+            multiplier=StorageConfiguration.DATABASE_RETRY_MULTIPLIER_IN_SECONDS,
+            exp_base=StorageConfiguration.DATABASE_RETRY_EXPONENT_BASE,
         ),
         retry=retry_if_exception_type(),
     )
@@ -47,7 +47,8 @@ class Neo4jClient:
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             await neo4j.cypher_query('RETURN 1')
-            logging.info(f"Connected to {Config.DATABASE_NAME} database as user {Config.DATABASE_USER}")
+            logging.info(
+                f"Connected to {StorageConfiguration.DATABASE_NAME} database as user {StorageConfiguration.DATABASE_USER}")
         except Exception as e:
             logging.error(f"Connection verification failed: {e}")
             raise
@@ -57,7 +58,7 @@ class Neo4jClient:
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             await neo4j.close_connection()
-            logging.info(f"Disconnected from {Config.DATABASE_NAME} database")
+            logging.info(f"Disconnected from {StorageConfiguration.DATABASE_NAME} database")
         except Exception as e:
             logging.error(f"Disconnection failed: {e}")
 
@@ -66,9 +67,25 @@ class Neo4jClient:
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             await neo4j.cypher_query('MATCH (n) DETACH DELETE n')
-            logging.info(f"Cleared {Config.DATABASE_NAME} database")
+            logging.info(f"Cleared {StorageConfiguration.DATABASE_NAME} database")
         except Exception as e:
             logging.error(f"Clearing database failed: {e}")
+
+    @staticmethod
+    async def drop_constraints():
+        try:
+            neo4j: AsyncDatabase = Neo4jClient.connect()
+            await neo4j.drop_constraints(quiet=False)
+        except Exception as e:
+            logging.error(f"Dropping constraints failed: {e}")
+
+    @staticmethod
+    async def drop_indices():
+        try:
+            neo4j: AsyncDatabase = Neo4jClient.connect()
+            await neo4j.drop_indexes(quiet=False)
+        except Exception as e:
+            logging.error(f"Dropping indices failed: {e}")
 
     @staticmethod
     async def execute_cypher(cypher: str, params: dict[str, Any]):
@@ -79,21 +96,26 @@ class Neo4jClient:
         except Exception as e:
             logging.error(f"Execute cypher failed: {e}")
 
+    @staticmethod
+    async def generate_index_name(label: str, column: str) -> str:
+        return f"{label.lower()}_{column}_index"
 
     @staticmethod
-    async def create_index(index_name: str, column_name: str, model_name: str):
+    async def create_index(label: str, column: str):
+        index_name: str = await Neo4jClient.generate_index_name(label, column)
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             cypher: str = f"""
-                CREATE INDEX {index_name} IF NOT EXISTS FOR (n:{model_name}) ON (n:{column_name})
+                CREATE INDEX {index_name} IF NOT EXISTS FOR (n:{label}) ON (n:{column})
                 """
-            logging.info(f"Creating index {index_name} on model {model_name} and column {column_name}")
+            logging.info(f"Creating index {index_name} on label {label} and column {column}")
             await neo4j.cypher_query(cypher)
         except Exception as e:
-            logging.error(f"Creating index {index_name} on model {model_name} and column {column_name} failed")
+            logging.error(f"Creating index {index_name} on label {label} and column {column} failed")
 
     @staticmethod
-    async def drop_index(index_name: str):
+    async def drop_index(label: str, column: str):
+        index_name: str = await Neo4jClient.generate_index_name(label, column)
         try:
             neo4j: AsyncDatabase = Neo4jClient.connect()
             cypher: str = f"""
@@ -106,9 +128,9 @@ class Neo4jClient:
 
 
 class MinioClient:
-    MINIO_ENDPOINT_URL: str = Config.MINIO_ENDPOINT_URL
-    MINIO_ACCESS_KEY: str = Config.MINIO_ACCESS_KEY
-    MINIO_SECRET_KEY: str = Config.MINIO_SECRET_KEY
+    MINIO_ENDPOINT_URL: str = StorageConfiguration.MINIO_ENDPOINT_URL
+    MINIO_ACCESS_KEY: str = StorageConfiguration.MINIO_ACCESS_KEY
+    MINIO_SECRET_KEY: str = StorageConfiguration.MINIO_SECRET_KEY
     _instance: 'MinioClient' = None
 
     def __new__(cls, *args, **kwargs):
