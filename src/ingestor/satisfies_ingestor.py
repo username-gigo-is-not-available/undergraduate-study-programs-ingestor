@@ -6,7 +6,8 @@ from src.patterns.builder.step import PipelineStep
 
 
 def satisfies_ingestor():
-    return (Pipeline(name='prerequisites-ingestor')
+    return (
+        Pipeline(name='satisfies-ingestor')
     .add_stage(
         PipelineStage(
             name='load-data',
@@ -27,7 +28,7 @@ def satisfies_ingestor():
         )
         .add_step(
             PipelineStep(
-                name='rename-prerequisites-columns',
+                name='rename-satisfies-columns',
                 function=PipelineStep.rename,
                 column_mapping=DatasetConfiguration.SATISFIES.transformation_config.column_mapping
             )
@@ -47,7 +48,7 @@ def satisfies_ingestor():
         )
         .add_step(
             PipelineStep(
-                name='partition-prerequisites-data',
+                name='partition-satisfies-data',
                 function=PipelineStep.partition,
             )
         )
@@ -59,7 +60,7 @@ def satisfies_ingestor():
         )
         .add_step(
             PipelineStep(
-                name='ingest-prerequisites-data',
+                name='ingest-satisfies-data',
                 function=PipelineStep.ingest_relationships,
                 configuration=RelationshipIngestionConfiguration.SATISFIES
             )
