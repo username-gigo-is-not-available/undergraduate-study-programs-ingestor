@@ -46,24 +46,16 @@ class DatasetIOConfiguration:
 
 
 class DatasetPathConfiguration:
+
     STUDY_PROGRAMS_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("STUDY_PROGRAMS_DATA_INPUT_FILE_NAME"))
-
     COURSES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("COURSES_DATA_INPUT_FILE_NAME"))
-
     PROFESSORS_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("PROFESSORS_DATA_INPUT_FILE_NAME"))
-
     CURRICULA_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("CURRICULA_DATA_INPUT_FILE_NAME"))
-
     REQUISITES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("REQUISITES_DATA_INPUT_FILE_NAME"))
-
     OFFERS_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("OFFERS_DATA_INPUT_FILE_NAME"))
-
     INCLUDES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("INCLUDES_DATA_INPUT_FILE_NAME"))
-
-    PREREQUISITES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("PREREQUISITES_DATA_INPUT_FILE_NAME"))
-
-    POSTREQUISITES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("POSTREQUISITES_DATA_INPUT_FILE_NAME"))
-
+    REQUIRES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("REQUIRES_DATA_INPUT_FILE_NAME"))
+    SATISFIES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("SATISFIES_DATA_INPUT_FILE_NAME"))
     TEACHES_INPUT: Path = Path(ENVIRONMENT_VARIABLES.get("TEACHES_DATA_INPUT_FILE_NAME"))
 
 
@@ -81,8 +73,8 @@ class DatasetConfiguration:
     REQUISITES: "DatasetConfiguration"
     OFFERS: "DatasetConfiguration"
     INCLUDES: "DatasetConfiguration"
-    PREREQUISITES: "DatasetConfiguration"
-    POSTREQUISITES: "DatasetConfiguration"
+    REQUIRES: "DatasetConfiguration"
+    SATISFIES: "DatasetConfiguration"
     TEACHES: "DatasetConfiguration"
 
     def __init__(self,
@@ -238,38 +230,38 @@ DatasetConfiguration.INCLUDES = DatasetConfiguration(
         }
     )
 )
-DatasetConfiguration.PREREQUISITES = DatasetConfiguration(
-    dataset=DatasetType.PREREQUISITES,
-    input_io_config=DatasetIOConfiguration(DatasetPathConfiguration.PREREQUISITES_INPUT),
-    transformation_config=DatasetTransformationConfiguration(
-        columns=
-        [
-            "prerequisite_id",
-            "prerequisite_course_id",
-            "requisite_id"
-        ],
-        column_mapping=
-        {
-            "prerequisite_id": "uid",
-            "prerequisite_course_id": "prerequisite_course_id",
-            "requisite_id": "requisite_id"
-        }
-    )
-)
-DatasetConfiguration.POSTREQUISITES = DatasetConfiguration(
+DatasetConfiguration.REQUIRES = DatasetConfiguration(
     dataset=DatasetType.POSTREQUISITES,
-    input_io_config=DatasetIOConfiguration(DatasetPathConfiguration.POSTREQUISITES_INPUT),
+    input_io_config=DatasetIOConfiguration(DatasetPathConfiguration.REQUIRES_INPUT),
     transformation_config=DatasetTransformationConfiguration(
         columns=
         [
-            "postrequisite_id",
+            "requires_id",
             "course_id",
             "requisite_id"
         ],
         column_mapping=
         {
-            "postrequisite_id": "uid",
+            "requires_id": "uid",
             "course_id": "course_id",
+            "requisite_id": "requisite_id"
+        }
+    )
+)
+DatasetConfiguration.SATISFIES = DatasetConfiguration(
+    dataset=DatasetType.PREREQUISITES,
+    input_io_config=DatasetIOConfiguration(DatasetPathConfiguration.SATISFIES_INPUT),
+    transformation_config=DatasetTransformationConfiguration(
+        columns=
+        [
+            "satisfies_id",
+            "prerequisite_course_id",
+            "requisite_id"
+        ],
+        column_mapping=
+        {
+            "satisfies_id": "uid",
+            "prerequisite_course_id": "prerequisite_course_id",
             "requisite_id": "requisite_id"
         }
     )
@@ -365,8 +357,8 @@ NodeIngestionConfiguration.REQUISITES = NodeIngestionConfiguration(
 class RelationshipIngestionConfiguration:
     OFFERS: "RelationshipIngestionConfiguration"
     INCLUDES: "RelationshipIngestionConfiguration"
-    PREREQUISITES: "RelationshipIngestionConfiguration"
-    POSTREQUISITES: "RelationshipIngestionConfiguration"
+    REQUIRES: "RelationshipIngestionConfiguration"
+    SATISFIES: "RelationshipIngestionConfiguration"
     TEACHES: "RelationshipIngestionConfiguration"
 
     def __init__(self,
@@ -404,22 +396,22 @@ RelationshipIngestionConfiguration.INCLUDES = RelationshipIngestionConfiguration
     columns=list(DatasetConfiguration.INCLUDES.transformation_config.column_mapping.values())
 )
 
-RelationshipIngestionConfiguration.PREREQUISITES = RelationshipIngestionConfiguration(
-    source_node_label="Course",
-    destination_node_label="Requisite",
-    source_node_column=PartitioningConfiguration.PREREQUISITES.source_node_column,
-    destination_node_column=PartitioningConfiguration.PREREQUISITES.destination_node_column,
-    label="IS_PREREQUISITE_FOR",
-    columns=list(DatasetConfiguration.PREREQUISITES.transformation_config.column_mapping.values())
-)
-
-RelationshipIngestionConfiguration.POSTREQUISITES = RelationshipIngestionConfiguration(
+RelationshipIngestionConfiguration.REQUIRES = RelationshipIngestionConfiguration(
     source_node_label="Course",
     destination_node_label="Requisite",
     source_node_column=PartitioningConfiguration.POSTREQUISITES.source_node_column,
     destination_node_column=PartitioningConfiguration.POSTREQUISITES.destination_node_column,
-    label="IS_POSTREQUISITE_FOR",
-    columns=list(DatasetConfiguration.POSTREQUISITES.transformation_config.column_mapping.values())
+    label="REQUIRES",
+    columns=list(DatasetConfiguration.REQUIRES.transformation_config.column_mapping.values())
+)
+
+RelationshipIngestionConfiguration.SATISFIES = RelationshipIngestionConfiguration(
+    source_node_label="Course",
+    destination_node_label="Requisite",
+    source_node_column=PartitioningConfiguration.PREREQUISITES.source_node_column,
+    destination_node_column=PartitioningConfiguration.PREREQUISITES.destination_node_column,
+    label="SATISFIES",
+    columns=list(DatasetConfiguration.SATISFIES.transformation_config.column_mapping.values())
 )
 
 RelationshipIngestionConfiguration.TEACHES = RelationshipIngestionConfiguration(

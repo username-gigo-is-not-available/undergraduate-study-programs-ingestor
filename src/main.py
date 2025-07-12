@@ -7,8 +7,8 @@ from src.ingestor.courses_ingestor import courses_ingestor
 from src.ingestor.curricula_ingestor import curricula_ingestor
 from src.ingestor.includes_ingestor import includes_ingestor
 from src.ingestor.offers_ingestor import offers_ingestor
-from src.ingestor.postrequisites_ingestor import postrequisites_ingestor
-from src.ingestor.prerequisites_ingestor import prerequisites_ingestor
+from src.ingestor.requires_ingestor import requires_ingestor
+from src.ingestor.satisfies_ingestor import satisfies_ingestor
 from src.ingestor.professors_ingestor import professors_ingestor
 from src.ingestor.requisite_ingestor import requisites_ingestor
 from src.ingestor.study_programs_ingestor import study_programs_ingestor
@@ -48,8 +48,8 @@ async def main():
         relationship_pipelines: list[Pipeline] = [
             offers_ingestor(),
             includes_ingestor(),
-            prerequisites_ingestor(),
-            postrequisites_ingestor(),
+            satisfies_ingestor(),
+            requires_ingestor(),
             teaches_ingestor()
         ]
 
