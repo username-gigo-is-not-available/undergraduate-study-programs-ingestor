@@ -31,8 +31,8 @@ In order to represent the relationships between the nodes, the application uses 
 
 - `OFFERS`: connects a study program with a curriculum
 - `INCLUDES`: connects a curriculum with a course
-- `PREREQUISITES`: connects a course with a requisite
-- `POSTREQUISITES`: connects a course with a requisite
+- `REQUIRES`: connects a course with a requisite
+- `SATISFIES`: connects a course with a requisite
 - `TEACHES`: connects a professor with a course
 
 ### Partitioning Strategy 
@@ -89,7 +89,6 @@ especially for skewed datasets where many relationships target the same nodes.
 ##### Ingest
 
 - Create professor nodes with columns (`uid`, `name`, `surname`)
-
 
 #### Curriculum:
 
@@ -163,12 +162,34 @@ especially for skewed datasets where many relationships target the same nodes.
 - For each partition, create `INCLUDES` relationships from `Curriculum` nodes to `Course` nodes 
   by matching on the `uid` column
 
-#### Prerequisites:
+#### Requires:
 
 ##### Load
 
 - Load the prerequisite data (output from the validator) with the following columns:
-  `prerequisite_id`, `requisite_id`, `prerequisite_course_id`
+  `requires_id`, `requisite_id`, `course_id`
+
+##### Rename
+
+- Rename `requires_id` to `uid`
+
+##### Partition 
+
+- Generate `partition_uid` by extracting the last characters from `course_id` and `requisite_id` 
+  and concatenating them with `-`
+- Generate partition matrix by using the wrap around technique and partition the dataframe
+
+##### Ingest
+
+- For each partition, create `REQUIRES` relationships from `Course` nodes to `Requisite` nodes 
+  by matching on the `uid` column
+
+#### Satisfies:
+
+##### Load
+
+- Load the prerequisite data (output from the validator) with the following columns:
+  `satisfies`, `requisite_id`, `prerequisite_course_id`
 
 ##### Rename
 
@@ -182,30 +203,7 @@ especially for skewed datasets where many relationships target the same nodes.
 
 ##### Ingest
 
-- For each partition, create `PREREQUISITE` relationships from `Course` nodes to `Requisite` nodes 
-  by matching on the `uid` column
-
-
-#### Postrequisites:
-
-##### Load
-
-- Load the prerequisite data (output from the validator) with the following columns:
-  `postrequisite_id`, `requisite_id`, `course_id`
-
-##### Rename
-
-- Rename `postrequisite_id` to `uid`
-
-##### Partition 
-
-- Generate `partition_uid` by extracting the last characters from `course_id` and `requisite_id` 
-  and concatenating them with `-`
-- Generate partition matrix by using the wrap around technique and partition the dataframe
-
-##### Ingest
-
-- For each partition, create `postrequisite_id` relationships from `Course` nodes to `Requisite` nodes 
+- For each partition, create `SATISFIES` relationships from `Course` nodes to `Requisite` nodes 
   by matching on the `uid` column
 
 #### Teaches:
@@ -285,8 +283,8 @@ Before running the ingestor, make sure to set the following environment variable
 - `REQUISITES_DATA_INPUT_FILE_NAME`: the name of the requisites input file
 - `OFFERS_DATA_INPUT_FILE_NAME`: the name of the offers input file
 - `INCLUDES_DATA_INPUT_FILE_NAME`: the name of the includes input file
-- `PREREQUISITES_DATA_INPUT_FILE_NAME`: the name of the prerequisites input file
-- `POSTREQUISITES_DATA_INPUT_FILE_NAME`: the name of the postrequisites input file
+- `REQUIRES_DATA_INPUT_FILE_NAME`: the name of the requires input file
+- `SATISFIES_DATA_INPUT_FILE_NAME`: the name of the satisfies input file
 - `TEACHES_DATA_INPUT_FILE_NAME`: the name of the teaches input file
 
 
