@@ -6,7 +6,8 @@ from src.patterns.builder.step import PipelineStep
 
 
 def offers_ingestor():
-    return (Pipeline(name='offers-ingestor')
+    return (
+        Pipeline(name='offers-ingestor')
     .add_stage(
         PipelineStage(
             name='load-data',

@@ -5,7 +5,7 @@ from src.patterns.builder.stage import PipelineStage
 from src.patterns.builder.step import PipelineStep
 
 
-def prerequisites_ingestor():
+def satisfies_ingestor():
     return (Pipeline(name='prerequisites-ingestor')
     .add_stage(
         PipelineStage(
@@ -16,7 +16,7 @@ def prerequisites_ingestor():
             PipelineStep(
                 name='load-prerequisites-data',
                 function=PipelineStep.read_data,
-                configuration=DatasetConfiguration.PREREQUISITES
+                configuration=DatasetConfiguration.SATISFIES
             )
         )
     )
@@ -29,7 +29,7 @@ def prerequisites_ingestor():
             PipelineStep(
                 name='rename-prerequisites-columns',
                 function=PipelineStep.rename,
-                column_mapping=DatasetConfiguration.PREREQUISITES.transformation_config.column_mapping
+                column_mapping=DatasetConfiguration.SATISFIES.transformation_config.column_mapping
             )
         )
     )
@@ -61,7 +61,7 @@ def prerequisites_ingestor():
             PipelineStep(
                 name='ingest-prerequisites-data',
                 function=PipelineStep.ingest_relationships,
-                configuration=RelationshipIngestionConfiguration.PREREQUISITES
+                configuration=RelationshipIngestionConfiguration.SATISFIES
             )
         )
     )

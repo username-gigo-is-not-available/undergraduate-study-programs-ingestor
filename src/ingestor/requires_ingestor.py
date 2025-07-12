@@ -16,7 +16,7 @@ def postrequisites_ingestor():
             PipelineStep(
                 name='load-postrequisites-data',
                 function=PipelineStep.read_data,
-                configuration=DatasetConfiguration.POSTREQUISITES
+                configuration=DatasetConfiguration.REQUIRES
             )
         )
     )
@@ -29,7 +29,7 @@ def postrequisites_ingestor():
             PipelineStep(
                 name='rename-postrequisites-columns',
                 function=PipelineStep.rename,
-                column_mapping=DatasetConfiguration.POSTREQUISITES.transformation_config.column_mapping
+                column_mapping=DatasetConfiguration.REQUIRES.transformation_config.column_mapping
             )
         )
     )
@@ -61,7 +61,7 @@ def postrequisites_ingestor():
             PipelineStep(
                 name='ingest-postrequisites-data',
                 function=PipelineStep.ingest_relationships,
-                configuration=RelationshipIngestionConfiguration.POSTREQUISITES
+                configuration=RelationshipIngestionConfiguration.REQUIRES
             )
         )
     )
