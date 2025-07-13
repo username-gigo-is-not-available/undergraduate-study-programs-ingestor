@@ -27,7 +27,8 @@ class DataPartitionMixin:
             partitions: list[str] = []
             for j in range(partition_size):
                 k: int = (i + j) % partition_size
-                partitions.append(str(k) + '-' + str(j))
+                row, col = format(k, 'x'), format(j, 'x') # to hex
+                partitions.append(str(row) + '-' + str(col))
             batches.append(partitions)
         return batches
 
