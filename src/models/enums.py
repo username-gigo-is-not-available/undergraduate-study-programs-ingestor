@@ -15,6 +15,7 @@ class CoursePrerequisiteType(UpperStrEnum):
 class StageType(UpperStrEnum):
     LOAD = auto()
     RENAME = auto()
+    CAST = auto()
     PARTITION = auto()
     INGEST = auto()
     STORE = auto()
