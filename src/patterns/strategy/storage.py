@@ -14,15 +14,18 @@ from src.clients import MinioClient
 from src.configurations import StorageConfiguration
 
 
-class FileStorageStrategy:
+class StorageStrategy:
+
+    async def load_schema(self, schema_file_name: Path) -> dict:
+        raise NotImplementedError
+
     async def read_data(self, input_file_name: Path) -> pd.DataFrame:
         raise NotImplementedError
 
 
-class LocalFileStorage(FileStorageStrategy):
+class LocalStorage(StorageStrategy):
 
-    @classmethod
-    async def load_schema(cls, schema_file_name: Path) -> str | list | dict | None:
+    async def load_schema(self, schema_file_name: Path) -> str | list | dict | None:
         path: Path = StorageConfiguration.SCHEMA_DIRECTORY_PATH / schema_file_name
         try:
             logging.info(f"Reading schema from local storage: {path}")
@@ -45,13 +48,12 @@ class LocalFileStorage(FileStorageStrategy):
             raise
         except Exception as e:
             logging.error(f"Failed to read data from local storage: {e}")
-            raise
+            return pd.DataFrame()
 
 
-class MinioFileStorage(FileStorageStrategy):
+class MinioStorage(StorageStrategy):
 
-    @classmethod
-    async def load_schema(cls, schema_file_name: Path) -> dict:
+    async def load_schema(self, schema_file_name: Path) -> dict:
         object_name: str = "/".join([StorageConfiguration.MINIO_INPUT_DATA_BUCKET_NAME, str(schema_file_name)])
         try:
             logging.info(
@@ -67,8 +69,7 @@ class MinioFileStorage(FileStorageStrategy):
                 buffer: BytesIO = BytesIO(data)
             return parse_schema(json.load(buffer))
         except S3Error as e:
-            logging.error(
-                f"Failed to read schema from MinIO bucket {StorageConfiguration.MINIO_SCHEMA_BUCKET_NAME}/{object_name}: {e}")
+            logging.error(f"Failed to read schema from MinIO bucket {StorageConfiguration.MINIO_SCHEMA_BUCKET_NAME}/{object_name}: {e}")
             return {}
 
     async def read_data(self, input_file_name: Path) -> pd.DataFrame:
@@ -86,5 +87,5 @@ class MinioFileStorage(FileStorageStrategy):
                 buffer: BytesIO = BytesIO(data)
                 return pd.DataFrame(list(reader(buffer)))
         except S3Error as e:
-            f"Failed to read data from MinIO bucket {StorageConfiguration.MINIO_INPUT_DATA_BUCKET_NAME}: {e}")
-            raise
+            logging.error(f"Failed to read data from MinIO bucket {StorageConfiguration.MINIO_INPUT_DATA_BUCKET_NAME}: {e}")
+            return pd.DataFrame()

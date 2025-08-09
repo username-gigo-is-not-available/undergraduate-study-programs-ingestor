@@ -56,6 +56,10 @@ especially for skewed datasets where many relationships target the same nodes.
 
 - Drop `study_program` prefix in all columns
 
+##### Cast
+
+- Cast `uid` from `UUID` type to `str` type
+
 ##### Ingest
 
 - Create study program nodes with columns (`uid`, `code`, `name`, `duration`, `url`)
@@ -70,6 +74,10 @@ especially for skewed datasets where many relationships target the same nodes.
 ##### Rename
 
 - Drop `course` prefix in all columns
+
+##### Cast
+
+- Cast `uid` from `UUID` type to `str` type
 
 ##### Ingest
 
@@ -86,6 +94,10 @@ especially for skewed datasets where many relationships target the same nodes.
 
 - Drop `professor` prefix in all columns
 
+##### Cast
+
+- Cast `uid` from `UUID` type to `str` type
+
 ##### Ingest
 
 - Create professor nodes with columns (`uid`, `name`, `surname`)
@@ -100,6 +112,10 @@ especially for skewed datasets where many relationships target the same nodes.
 ##### Rename
 
 - Drop `course` and `curriculum` prefix in all columns
+
+##### Cast
+
+- Cast `uid` from `UUID` type to `str` type
 
 ##### Ingest
 
@@ -116,6 +132,10 @@ especially for skewed datasets where many relationships target the same nodes.
 
 - Rename `requisite_id` to `uid`, `course_prerequisite_type` to `type`
 
+##### Cast
+
+- Cast `uid` from `UUID` type to `str` type
+
 ##### Ingest
 
 - Create requisite nodes with columns (`uid`, `type`, `minimum_required_number_of_courses`)
@@ -130,6 +150,10 @@ especially for skewed datasets where many relationships target the same nodes.
 ##### Rename
 
 - Rename `offers_id` to `uid`
+
+##### Cast
+
+- Cast `uid`, `curriculum_id`, `study_program_id` from `UUID` type to `str` type
 
 ##### Partition 
 
@@ -149,7 +173,11 @@ especially for skewed datasets where many relationships target the same nodes.
 
 ##### Rename
 
-- Rename `includes` to `uid`
+- Rename `includes_id` to `uid`
+
+##### Cast
+
+- Cast `uid`, `curriculum_id`, `course_id` from `UUID` type to `str` type
 
 ##### Partition 
 
@@ -173,6 +201,10 @@ especially for skewed datasets where many relationships target the same nodes.
 
 - Rename `requires_id` to `uid`
 
+##### Cast
+
+- Cast `uid`, `requisite_id`, `course_id` from `UUID` type to `str` type
+
 ##### Partition 
 
 - Generate `partition_uid` by extracting the last characters from `course_id` and `requisite_id` 
@@ -193,7 +225,11 @@ especially for skewed datasets where many relationships target the same nodes.
 
 ##### Rename
 
-- Rename `prerequisite_id` to `uid`
+- Rename `prerequisite_course_id` to `uid`
+
+##### Cast
+
+- Cast `uid`, `prerequisite_course_id`, `requisite_id` from `UUID` type to `str` type
 
 ##### Partition 
 
@@ -214,6 +250,10 @@ especially for skewed datasets where many relationships target the same nodes.
 ##### Rename
 
 - Rename `teaches_id` to `uid`
+
+##### Cast
+
+- Cast `uid`, `course_id`, `professor_id` from `UUID` type to `str` type
 
 ##### Partition 
 
@@ -265,14 +305,15 @@ Before running the ingestor, make sure to set the following environment variable
 
 ##### If running the application with local storage:
 
-- `INPUT_DIRECTORY_PATH`: the path to the directory where the input files are stored
+- `INPUT_DATA_DIRECTORY_PATH`: the path to the directory where the input files are stored
 
 ##### If running the application with MinIO:
 
 - `MINIO_ENDPOINT`: the endpoint of the MinIO server
 - `MINIO_ACCESS_KEY`: the access key of the MinIO server
 - `MINIO_SECRET_KEY`: the secret key of the MinIO server
-- `MINIO_SOURCE_BUCKET_NAME`: the name of the bucket where the input files are stored
+- `MINIO_INPUT_DATA_BUCKET_NAME`: the name of the bucket where the input files are stored
+- `MINIO_SCHEMA_BUCKET_NAME`: the name of the bucket where the schema files are stored
 
 ##### Dataset Paths
 
@@ -287,6 +328,16 @@ Before running the ingestor, make sure to set the following environment variable
 - `SATISFIES_DATA_INPUT_FILE_NAME`: the name of the satisfies input file
 - `TEACHES_DATA_INPUT_FILE_NAME`: the name of the teaches input file
 
+- `STUDY_PROGRAMS_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `StudyProgram` record is stored
+- `CURRICULA_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Curriculum` record is stored
+- `COURSES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Course` record is stored
+- `REQUISITES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Requisite` record is stored
+- `PROFESSORS_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Professor` record is stored
+- `OFFERS_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Offers` record is stored
+- `INCLUDES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Includes` record is stored
+- `REQUIRES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Requires` record is stored
+- `SATISFIES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Satisfies` record is stored
+- `TEACHES_SCHEMA_FILE_NAME`: the name of the file where the avro schema for the `Teaches` record is stored
 
 ## Installation
 

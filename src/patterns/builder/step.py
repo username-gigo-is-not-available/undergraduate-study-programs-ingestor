@@ -6,10 +6,10 @@ import pandas as pd
 from src.patterns.mixin.data_ingestion import DataIngestionMixin
 from src.patterns.mixin.data_partition import DataPartitionMixin
 from src.patterns.mixin.data_transformation import DataTransformationMixin
-from src.patterns.mixin.file_storage import FileStorageMixin
+from src.patterns.mixin.storage import StorageMixin
 
 
-class PipelineStep(FileStorageMixin, DataTransformationMixin, DataPartitionMixin, DataIngestionMixin):
+class PipelineStep(StorageMixin, DataTransformationMixin, DataPartitionMixin, DataIngestionMixin):
     def __init__(self, name: str, function: callable, *args, **kwargs):
         super().__init__()
         self.name: str = name
