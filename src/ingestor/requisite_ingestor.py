@@ -1,4 +1,4 @@
-from src.configurations import DatasetConfiguration, NodeIngestionConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def requisites_ingestor():
                 PipelineStep(
                     name='load-requisites-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.REQUISITES
+                    configuration=GraphConfiguration.REQUISITES
                 )
             )
         )
@@ -30,7 +30,7 @@ def requisites_ingestor():
                 PipelineStep(
                     name='rename-requisites-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.REQUISITES.column_mapping
+                    column_mapping=GraphConfiguration.REQUISITES.column_mapping
                 )
             )
         )
@@ -57,7 +57,7 @@ def requisites_ingestor():
                 PipelineStep(
                     name='ingest-requisites-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=NodeIngestionConfiguration.REQUISITES
+                    configuration=GraphConfiguration.REQUISITES
                 )
             )
         )

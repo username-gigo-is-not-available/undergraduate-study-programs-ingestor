@@ -1,4 +1,4 @@
-from src.configurations import DatasetConfiguration, NodeIngestionConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def study_programs_ingestor():
                 PipelineStep(
                     name='load-study-programs-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.STUDY_PROGRAMS
+                    configuration=GraphConfiguration.STUDY_PROGRAMS
                 )
             )
         )
@@ -30,7 +30,7 @@ def study_programs_ingestor():
                 PipelineStep(
                     name='rename-study-programs-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.STUDY_PROGRAMS.column_mapping
+                    column_mapping=GraphConfiguration.STUDY_PROGRAMS.column_mapping
                 )
             )
         )
@@ -57,7 +57,7 @@ def study_programs_ingestor():
                 PipelineStep(
                     name='ingest-study-programs-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=NodeIngestionConfiguration.STUDY_PROGRAMS
+                    configuration=GraphConfiguration.STUDY_PROGRAMS
                 )
             )
         )

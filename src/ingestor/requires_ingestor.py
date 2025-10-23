@@ -1,4 +1,4 @@
-from src.configurations import RelationshipIngestionConfiguration, DatasetConfiguration, PartitioningConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def requires_ingestor():
                 PipelineStep(
                     name='load-requires-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.REQUIRES
+                    configuration=GraphConfiguration.REQUIRES
                 )
             )
         )
@@ -30,7 +30,7 @@ def requires_ingestor():
                 PipelineStep(
                     name='rename-requires-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.REQUIRES.column_mapping
+                    column_mapping=GraphConfiguration.REQUIRES.column_mapping
                 )
             )
         )
@@ -73,7 +73,7 @@ def requires_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=PartitioningConfiguration.POSTREQUISITES
+                    configuration=GraphConfiguration.REQUIRES
                 )
             )
             .add_step(
@@ -92,7 +92,7 @@ def requires_ingestor():
                 PipelineStep(
                     name='ingest-requires-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=RelationshipIngestionConfiguration.REQUIRES
+                    configuration=GraphConfiguration.REQUIRES
                 )
             )
         )

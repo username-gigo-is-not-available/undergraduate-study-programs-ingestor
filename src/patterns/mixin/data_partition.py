@@ -1,17 +1,17 @@
 import pandas as pd
 
-from src.configurations import PartitioningConfiguration
+from src.configurations import NodeConfiguration, GraphConfiguration, RelationshipConfiguration
 
 
 class DataPartitionMixin:
 
     async def generate_partition_uid(self, df: pd.DataFrame,
-                                     configuration: PartitioningConfiguration) -> pd.DataFrame:
+                                     configuration: RelationshipConfiguration) -> pd.DataFrame:
 
         df["partition_uid"] = df.apply(
             lambda row: "-".join([
-                row[configuration.source_node_column][-1],
-                row[configuration.destination_node_column][-1]
+                row[configuration.source_node.index_column][-1],
+                row[configuration.destination_node.index_column][-1]
             ]),
             axis=1
         )

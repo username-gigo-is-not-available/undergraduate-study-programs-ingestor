@@ -1,4 +1,4 @@
-from src.configurations import RelationshipIngestionConfiguration, DatasetConfiguration, PartitioningConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def offers_ingestor():
                 PipelineStep(
                     name='load-offers-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.OFFERS
+                    configuration=GraphConfiguration.OFFERS
                 )
             )
         )
@@ -30,7 +30,7 @@ def offers_ingestor():
                 PipelineStep(
                     name='rename-offers-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.OFFERS.column_mapping
+                    column_mapping=GraphConfiguration.OFFERS.column_mapping
                 )
             )
         )
@@ -73,7 +73,7 @@ def offers_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=PartitioningConfiguration.OFFERS
+                    configuration=GraphConfiguration.OFFERS
                 )
             )
             .add_step(
@@ -92,7 +92,7 @@ def offers_ingestor():
                 PipelineStep(
                     name='ingest-offers-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=RelationshipIngestionConfiguration.OFFERS
+                    configuration=GraphConfiguration.OFFERS
                 )
             )
         )

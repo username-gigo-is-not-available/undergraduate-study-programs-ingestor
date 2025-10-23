@@ -1,4 +1,4 @@
-from src.configurations import DatasetConfiguration, NodeIngestionConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def professors_ingestor():
                 PipelineStep(
                     name='load-professors-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.PROFESSORS
+                    configuration=GraphConfiguration.PROFESSORS
                 )
             )
         )
@@ -30,7 +30,7 @@ def professors_ingestor():
                 PipelineStep(
                     name='rename-professors-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.PROFESSORS.column_mapping
+                    column_mapping=GraphConfiguration.PROFESSORS.column_mapping
                 )
             )
         )
@@ -57,7 +57,7 @@ def professors_ingestor():
                 PipelineStep(
                     name='ingest-professors-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=NodeIngestionConfiguration.PROFESSORS
+                    configuration=GraphConfiguration.PROFESSORS
                 )
             )
         )

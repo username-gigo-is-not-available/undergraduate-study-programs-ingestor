@@ -1,4 +1,4 @@
-from src.configurations import RelationshipIngestionConfiguration, DatasetConfiguration, PartitioningConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def satisfies_ingestor():
                 PipelineStep(
                     name='load-prerequisites-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.SATISFIES
+                    configuration=GraphConfiguration.SATISFIES
                 )
             )
         )
@@ -30,7 +30,7 @@ def satisfies_ingestor():
                 PipelineStep(
                     name='rename-satisfies-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.SATISFIES.column_mapping
+                    configuration=GraphConfiguration.SATISFIES
                 )
             )
         )
@@ -73,7 +73,7 @@ def satisfies_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=PartitioningConfiguration.PREREQUISITES
+                    configuration=GraphConfiguration.SATISFIES
                 )
             )
             .add_step(
@@ -92,7 +92,7 @@ def satisfies_ingestor():
                 PipelineStep(
                     name='ingest-satisfies-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=RelationshipIngestionConfiguration.SATISFIES
+                    configuration=GraphConfiguration.SATISFIES
                 )
             )
         )

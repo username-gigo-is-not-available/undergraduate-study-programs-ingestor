@@ -1,4 +1,4 @@
-from src.configurations import DatasetConfiguration, NodeIngestionConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def courses_ingestor():
                 PipelineStep(
                     name='load-courses-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.COURSES
+                    configuration=GraphConfiguration.COURSES
                 )
             )
         )
@@ -30,7 +30,7 @@ def courses_ingestor():
                 PipelineStep(
                     name='rename-courses-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.COURSES.column_mapping
+                    column_mapping=GraphConfiguration.COURSES.column_mapping
                 )
             )
         )
@@ -57,7 +57,7 @@ def courses_ingestor():
                 PipelineStep(
                     name='ingest-courses-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=NodeIngestionConfiguration.COURSES
+                    configuration=GraphConfiguration.COURSES
                 )
             )
         )

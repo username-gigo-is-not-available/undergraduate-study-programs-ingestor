@@ -1,4 +1,4 @@
-from src.configurations import RelationshipIngestionConfiguration, DatasetConfiguration, PartitioningConfiguration
+from src.configurations import GraphConfiguration
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
@@ -17,7 +17,7 @@ def teaches_ingestor():
                 PipelineStep(
                     name='load-teaches-data',
                     function=PipelineStep.read_data,
-                    configuration=DatasetConfiguration.TEACHES
+                    configuration=GraphConfiguration.TEACHES
                 )
             )
         )
@@ -30,7 +30,7 @@ def teaches_ingestor():
                 PipelineStep(
                     name='rename-teaches-columns',
                     function=PipelineStep.rename,
-                    column_mapping=DatasetConfiguration.TEACHES.column_mapping
+                    column_mapping=GraphConfiguration.TEACHES.column_mapping
                 )
             )
         )
@@ -73,7 +73,7 @@ def teaches_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=PartitioningConfiguration.TEACHES
+                    configuration=GraphConfiguration.TEACHES
                 )
             )
             .add_step(
@@ -92,7 +92,7 @@ def teaches_ingestor():
                 PipelineStep(
                     name='ingest-teaches-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=RelationshipIngestionConfiguration.TEACHES
+                    configuration=GraphConfiguration.TEACHES
                 )
             )
         )
