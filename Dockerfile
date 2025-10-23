@@ -32,6 +32,8 @@ WORKDIR /undergraduate-study-programs-ingestor
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
+COPY .pyiceberg.yaml .
+
 COPY ./src ./src
 
 ENV PYTHONPATH=/undergraduate-study-programs-ingestor
