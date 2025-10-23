@@ -1,0 +1,93 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+    networks:
+      iceberg:
+
+
+  iceberg-rest:
+    image: apache/iceberg-rest-fixture
+    container_name: iceberg-rest
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      AWS_REGION: us-east-1
+      CATALOG_WAREHOUSE: s3://${S3_ICEBERG_LAKEHOUSE_BUCKET_NAME}
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://minio:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: true
+    ports:
+      - "8181:8181"
+    networks:
+      iceberg:
+
+  neo4j:
+    image: neo4j
+    container_name: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: ${DATABASE_USER}/${DATABASE_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "cypher-shell", "-u", "${DATABASE_USER}", "-p", "${DATABASE_PASSWORD}", "match (n) return (n)" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      minio:
+        condition: service_healthy
+      iceberg-rest:
+        condition: service_healthy
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/import
+      - neo4j-plugins:/plugins
+    networks:
+      iceberg:
+
+  ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ingestor
+    depends_on:
+      minio:
+        condition: service_healthy
+      iceberg-rest:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      iceberg:
+
+volumes:
+  minio-data:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
+  neo4j-plugins:
+
+networks:
+  iceberg:
+    driver: bridge
