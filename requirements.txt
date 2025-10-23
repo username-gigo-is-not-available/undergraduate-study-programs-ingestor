@@ -1,5 +1,5 @@
 neomodel==5.5.0
-minio==7.2.16
+minio==7.2.18
 tenacity==9.1.2
 pandas==2.3.1
 python-dotenv==1.1.1
