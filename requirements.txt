@@ -1,4 +1,4 @@
-neomodel==5.5.0
+neomodel==5.5.3
 minio==7.2.16
 tenacity==9.1.2
 pandas==2.3.1
