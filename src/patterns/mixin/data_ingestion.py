@@ -5,7 +5,7 @@ from neo4j.exceptions import TransientError
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
 from src.clients import Neo4jClient
-from src.configurations import NodeIngestionConfiguration, RelationshipIngestionConfiguration, StorageConfiguration
+from src.configurations import StorageConfiguration, NodeConfiguration, RelationshipConfiguration
 
 
 class DataIngestionMixin:
@@ -17,7 +17,7 @@ class DataIngestionMixin:
            ),
            retry=retry_if_exception_type(TransientError)
            )
-    async def ingest_nodes(self, df: pd.DataFrame, configuration: NodeIngestionConfiguration):
+    async def ingest_nodes(self, df: pd.DataFrame, configuration: NodeConfiguration):
         rows: list[dict[str, str | int]] = df.to_dict(orient='records')
 
         create_clause: str = f"""
@@ -25,7 +25,7 @@ class DataIngestionMixin:
                    """
 
         set_clause: str = f"""
-                   SET {", ".join([f"n.{column} = row.{column}" for column in configuration.columns])}
+                   SET {", ".join([f"n.{column} = row.{column}" for column in configuration.columns()])}
                    """
 
         cypher: str = f"""
@@ -44,16 +44,16 @@ class DataIngestionMixin:
            ),
            retry=retry_if_exception_type(TransientError)
            )
-    async def ingest_relationships(self, df: list[pd.DataFrame], configuration: RelationshipIngestionConfiguration):
+    async def ingest_relationships(self, df: list[pd.DataFrame], configuration: RelationshipConfiguration):
 
-        set_columns = set(configuration.columns) - {
-            configuration.source_node_column,
-            configuration.destination_node_column
+        set_columns = set(configuration.columns()) - {
+            configuration.source_node.index_column,
+            configuration.destination_node.index_column,
         }
 
         match_clause = f"""
-            MATCH (src:{configuration.source_node_label} {{uid: row.{configuration.source_node_column}}})
-            MATCH (dest:{configuration.destination_node_label} {{uid: row.{configuration.destination_node_column}}})
+            MATCH (src:{configuration.source_node.label} {{uid: row.{configuration.source_node.index_column}}})
+            MATCH (dest:{configuration.destination_node.label} {{uid: row.{configuration.destination_node.index_column}}})
         """
 
         create_clause = f"""
