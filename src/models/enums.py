@@ -44,14 +44,7 @@ class ComponentName(StrEnum):
             ComponentName.TEACHES: ComponentType.RELATIONSHIP,
         }[component_name]
 
-class DatasetType(UpperStrEnum):
-    STUDY_PROGRAMS: str = auto()
-    COURSES: str = auto()
-    PROFESSORS: str = auto()
-    CURRICULA: str = auto()
-    REQUISITES: str = auto()
-    OFFERS: str = auto()
-    INCLUDES: str = auto()
-    PREREQUISITES: str = auto()
-    POSTREQUISITES: str = auto()
-    TEACHES: str = auto()
+
+class FileIOType(UpperStrEnum):
+    S3 = auto()
+    LOCAL = auto()
