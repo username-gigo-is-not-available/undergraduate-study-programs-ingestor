@@ -1,13 +1,13 @@
-from src.configurations import GraphConfiguration
+from src.configurations import INCLUDES
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
 from src.patterns.builder.step import PipelineStep
 
 
-def requires_ingestor():
+def includes_pipeline():
     return (
-        Pipeline(name='requires-ingestor')
+        Pipeline(name='includes-pipeline')
         .add_stage(
             PipelineStage(
                 name='load-data',
@@ -15,9 +15,9 @@ def requires_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='load-requires-data',
+                    name='load-includes-data',
                     function=PipelineStep.read_data,
-                    configuration=GraphConfiguration.REQUIRES
+                    configuration=INCLUDES
                 )
             )
         )
@@ -28,9 +28,9 @@ def requires_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='rename-requires-columns',
+                    name='rename-includes-columns',
                     function=PipelineStep.rename,
-                    column_mapping=GraphConfiguration.REQUIRES.column_mapping
+                    column_mapping=INCLUDES.column_mapping
                 )
             )
         )
@@ -49,17 +49,17 @@ def requires_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='cast-course-id-column-to-string',
+                    name='cast-curriculum-id-column-to-string',
                     function=PipelineStep.cast,
-                    column='course_id',
+                    column='curriculum_id',
                     data_type=str
                 )
             )
             .add_step(
                 PipelineStep(
-                    name='cast-requisite-id-column-to-string',
+                    name='cast-course-id-column-to-string',
                     function=PipelineStep.cast,
-                    column='requisite_id',
+                    column='course_id',
                     data_type=str
                 )
             )
@@ -73,12 +73,12 @@ def requires_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=GraphConfiguration.REQUIRES
+                    configuration=INCLUDES
                 )
             )
             .add_step(
                 PipelineStep(
-                    name='partition-requires-data',
+                    name='partition-includes-data',
                     function=PipelineStep.partition,
                 )
             )
@@ -90,9 +90,9 @@ def requires_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='ingest-requires-data',
+                    name='ingest-includes-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=GraphConfiguration.REQUIRES
+                    configuration=INCLUDES
                 )
             )
         )

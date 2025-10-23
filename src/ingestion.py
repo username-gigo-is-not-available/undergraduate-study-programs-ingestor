@@ -4,7 +4,7 @@ import pandas as pd
 from neo4j.exceptions import TransientError
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
-from src.clients import Neo4jClient
+from src.storage import Neo4jClient
 from src.configurations import StorageConfiguration, NodeConfiguration, RelationshipConfiguration
 
 
@@ -25,7 +25,7 @@ class DataIngestionMixin:
                    """
 
         set_clause: str = f"""
-                   SET {", ".join([f"n.{column} = row.{column}" for column in configuration.columns()])}
+                   SET {", ".join([f"n.{column} = row.{column}" for column in configuration.output_columns()])}
                    """
 
         cypher: str = f"""
@@ -44,32 +44,22 @@ class DataIngestionMixin:
            ),
            retry=retry_if_exception_type(TransientError)
            )
+
     async def ingest_relationships(self, df: list[pd.DataFrame], configuration: RelationshipConfiguration):
 
-        set_columns = set(configuration.columns()) - {
-            configuration.source_node.index_column,
-            configuration.destination_node.index_column,
-        }
-
         match_clause = f"""
-            MATCH (src:{configuration.source_node.label} {{uid: row.{configuration.source_node.index_column}}})
-            MATCH (dest:{configuration.destination_node.label} {{uid: row.{configuration.destination_node.index_column}}})
+            MATCH (src:{configuration.source_node.label} {{uid: row.{configuration.source_node.labeled_index_column()}}})
+            MATCH (dest:{configuration.destination_node.label} {{uid: row.{configuration.destination_node.labeled_index_column()}}})
         """
 
         create_clause = f"""
             CREATE (src)-[r:{configuration.label}]->(dest)
         """
 
-        set_clause = ""
-        if set_columns:
-            sets = ", ".join([f"r.{col} = row.{col}" for col in set_columns])
-            set_clause = f"SET {sets}"
-
         cypher = f"""
             UNWIND $rows AS row
             {match_clause}
             {create_clause}
-            {set_clause}
         """
 
         execute_cypher_tasks: list[asyncio.Task] = []

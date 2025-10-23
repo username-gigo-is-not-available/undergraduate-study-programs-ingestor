@@ -1,13 +1,13 @@
-from src.configurations import GraphConfiguration
+from src.configurations import REQUIRES
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
 from src.patterns.builder.step import PipelineStep
 
 
-def offers_ingestor():
+def requires_pipeline():
     return (
-        Pipeline(name='offers-ingestor')
+        Pipeline(name='requires-pipeline')
         .add_stage(
             PipelineStage(
                 name='load-data',
@@ -15,9 +15,9 @@ def offers_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='load-offers-data',
+                    name='load-requires-data',
                     function=PipelineStep.read_data,
-                    configuration=GraphConfiguration.OFFERS
+                    configuration=REQUIRES
                 )
             )
         )
@@ -28,9 +28,9 @@ def offers_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='rename-offers-columns',
+                    name='rename-requires-columns',
                     function=PipelineStep.rename,
-                    column_mapping=GraphConfiguration.OFFERS.column_mapping
+                    column_mapping=REQUIRES.column_mapping
                 )
             )
         )
@@ -49,17 +49,17 @@ def offers_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='cast-study-program-id-column-to-string',
+                    name='cast-course-id-column-to-string',
                     function=PipelineStep.cast,
-                    column='study_program_id',
+                    column='course_id',
                     data_type=str
                 )
             )
             .add_step(
                 PipelineStep(
-                    name='cast-curriculum-id-column-to-string',
+                    name='cast-requisite-id-column-to-string',
                     function=PipelineStep.cast,
-                    column='curriculum_id',
+                    column='requisite_id',
                     data_type=str
                 )
             )
@@ -73,12 +73,12 @@ def offers_ingestor():
                 PipelineStep(
                     name='generate-partition-id',
                     function=PipelineStep.generate_partition_uid,
-                    configuration=GraphConfiguration.OFFERS
+                    configuration=REQUIRES
                 )
             )
             .add_step(
                 PipelineStep(
-                    name='partition-offers-data',
+                    name='partition-requires-data',
                     function=PipelineStep.partition,
                 )
             )
@@ -90,9 +90,9 @@ def offers_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='ingest-offers-data',
+                    name='ingest-requires-data',
                     function=PipelineStep.ingest_relationships,
-                    configuration=GraphConfiguration.OFFERS
+                    configuration=REQUIRES
                 )
             )
         )

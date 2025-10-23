@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.configurations import NodeConfiguration, GraphConfiguration, RelationshipConfiguration
+from src.configurations import RelationshipConfiguration
 
 
 class DataPartitionMixin:
@@ -10,8 +10,8 @@ class DataPartitionMixin:
 
         df["partition_uid"] = df.apply(
             lambda row: "-".join([
-                row[configuration.source_node.index_column][-1],
-                row[configuration.destination_node.index_column][-1]
+                row[configuration.source_node.labeled_index_column()][-1],
+                row[configuration.destination_node.labeled_index_column()][-1]
             ]),
             axis=1
         )

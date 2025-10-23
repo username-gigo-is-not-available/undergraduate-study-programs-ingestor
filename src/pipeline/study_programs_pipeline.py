@@ -1,13 +1,13 @@
-from src.configurations import GraphConfiguration
+from src.configurations import STUDY_PROGRAMS
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
 from src.patterns.builder.step import PipelineStep
 
 
-def requisites_ingestor():
+def study_programs_pipeline():
     return (
-        Pipeline(name='requisites-ingestor')
+        Pipeline(name='study-programs-pipeline')
         .add_stage(
             PipelineStage(
                 name='load-data',
@@ -15,9 +15,9 @@ def requisites_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='load-requisites-data',
+                    name='load-study-programs-data',
                     function=PipelineStep.read_data,
-                    configuration=GraphConfiguration.REQUISITES
+                    configuration=STUDY_PROGRAMS
                 )
             )
         )
@@ -28,9 +28,9 @@ def requisites_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='rename-requisites-columns',
+                    name='rename-study-programs-columns',
                     function=PipelineStep.rename,
-                    column_mapping=GraphConfiguration.REQUISITES.column_mapping
+                    column_mapping=STUDY_PROGRAMS.column_mapping
                 )
             )
         )
@@ -55,9 +55,9 @@ def requisites_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='ingest-requisites-data',
+                    name='ingest-study-programs-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=GraphConfiguration.REQUISITES
+                    configuration=STUDY_PROGRAMS
                 )
             )
         )

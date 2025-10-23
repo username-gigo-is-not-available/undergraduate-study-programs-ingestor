@@ -2,18 +2,18 @@ import asyncio
 import logging
 import time
 
-from src.configurations import NodeIngestionConfiguration, RelationshipIngestionConfiguration
-from src.ingestor.courses_ingestor import courses_ingestor
-from src.ingestor.curricula_ingestor import curricula_ingestor
-from src.ingestor.includes_ingestor import includes_ingestor
-from src.ingestor.offers_ingestor import offers_ingestor
-from src.ingestor.requires_ingestor import requires_ingestor
-from src.ingestor.satisfies_ingestor import satisfies_ingestor
-from src.ingestor.professors_ingestor import professors_ingestor
-from src.ingestor.requisite_ingestor import requisites_ingestor
-from src.ingestor.study_programs_ingestor import study_programs_ingestor
-from src.ingestor.teaches_ingestor import teaches_ingestor
-from src.clients import Neo4jClient
+from src.configurations import NodeConfiguration, STUDY_PROGRAMS, CURRICULA, COURSES, REQUISITES, PROFESSORS
+from src.pipeline.courses_pipeline import courses_pipeline
+from src.pipeline.curricula_pipeline import curricula_pipeline
+from src.pipeline.includes_pipeline import includes_pipeline
+from src.pipeline.offers_pipeline import offers_pipeline
+from src.pipeline.requires_pipeline import requires_pipeline
+from src.pipeline.satisfies_pipeline import satisfies_pipeline
+from src.pipeline.professors_pipeline import professors_pipeline
+from src.pipeline.requisite_pipeline import requisites_pipeline
+from src.pipeline.study_programs_pipeline import study_programs_pipeline
+from src.pipeline.teaches_pipeline import teaches_pipeline
+from src.storage import Neo4jClient
 from src.patterns.builder.pipeline import Pipeline
 
 logging.basicConfig(level=logging.INFO)
@@ -29,28 +29,20 @@ async def main():
         await Neo4jClient.drop_constraints()
         await Neo4jClient.drop_indices()
 
-        ingestion_configurations: list[NodeIngestionConfiguration | RelationshipIngestionConfiguration] = [
-            NodeIngestionConfiguration.STUDY_PROGRAMS,
-            NodeIngestionConfiguration.COURSES,
-            NodeIngestionConfiguration.PROFESSORS,
-            NodeIngestionConfiguration.CURRICULA,
-            NodeIngestionConfiguration.REQUISITES,
-        ]
-
         node_pipelines: list[Pipeline] = [
-            study_programs_ingestor(),
-            courses_ingestor(),
-            professors_ingestor(),
-            curricula_ingestor(),
-            requisites_ingestor()
+            study_programs_pipeline(),
+            courses_pipeline(),
+            professors_pipeline(),
+            curricula_pipeline(),
+            requisites_pipeline()
         ]
 
         relationship_pipelines: list[Pipeline] = [
-            offers_ingestor(),
-            includes_ingestor(),
-            satisfies_ingestor(),
-            requires_ingestor(),
-            teaches_ingestor()
+            offers_pipeline(),
+            includes_pipeline(),
+            satisfies_pipeline(),
+            requires_pipeline(),
+            teaches_pipeline()
         ]
 
         node_ingestion_tasks: list[asyncio.Task[Pipeline]] = [asyncio.create_task(pipeline.build().run()) for pipeline
@@ -59,7 +51,14 @@ async def main():
 
         create_indices_tasks: list[asyncio.Task[None]] = [
             asyncio.create_task(Neo4jClient.create_index(configuration.label, configuration.index_column)) for
-            configuration in ingestion_configurations]
+            configuration in [
+                STUDY_PROGRAMS,
+                CURRICULA,
+                COURSES,
+                REQUISITES,
+                PROFESSORS,
+            ]
+        ]
 
         await asyncio.gather(*create_indices_tasks)
 

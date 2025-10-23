@@ -1,13 +1,13 @@
-from src.configurations import GraphConfiguration
+from src.configurations import REQUISITES
 from src.models.enums import StageType
 from src.patterns.builder.pipeline import Pipeline
 from src.patterns.builder.stage import PipelineStage
 from src.patterns.builder.step import PipelineStep
 
 
-def curricula_ingestor():
+def requisites_pipeline():
     return (
-        Pipeline(name='curricula-ingestor')
+        Pipeline(name='requisites-pipeline')
         .add_stage(
             PipelineStage(
                 name='load-data',
@@ -15,9 +15,9 @@ def curricula_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='load-curricula-data',
+                    name='load-requisites-data',
                     function=PipelineStep.read_data,
-                    configuration=GraphConfiguration.CURRICULA
+                    configuration=REQUISITES
                 )
             )
         )
@@ -28,9 +28,9 @@ def curricula_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='rename-curricula-columns',
+                    name='rename-requisites-columns',
                     function=PipelineStep.rename,
-                    column_mapping=GraphConfiguration.CURRICULA.column_mapping
+                    column_mapping=REQUISITES.column_mapping
                 )
             )
         )
@@ -55,9 +55,9 @@ def curricula_ingestor():
             )
             .add_step(
                 PipelineStep(
-                    name='ingest-curricula-data',
+                    name='ingest-requisites-data',
                     function=PipelineStep.ingest_nodes,
-                    configuration=GraphConfiguration.CURRICULA
+                    configuration=REQUISITES
                 )
             )
         )
