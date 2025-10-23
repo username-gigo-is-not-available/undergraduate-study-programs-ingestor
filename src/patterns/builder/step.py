@@ -1,15 +1,14 @@
-import inspect
 import logging
 
 import pandas as pd
 
-from src.patterns.mixin.data_ingestion import DataIngestionMixin
-from src.patterns.mixin.data_partition import DataPartitionMixin
-from src.patterns.mixin.data_transformation import DataTransformationMixin
-from src.patterns.mixin.storage import StorageMixin
+from src.ingestion import DataIngestionMixin
+from src.partition import DataPartitionMixin
+from src.storage import DataStorageMixin
+from src.transformation import DataTransformationMixin
 
 
-class PipelineStep(StorageMixin, DataTransformationMixin, DataPartitionMixin, DataIngestionMixin):
+class PipelineStep(DataTransformationMixin, DataPartitionMixin, DataIngestionMixin, DataStorageMixin):
     def __init__(self, name: str, function: callable, *args, **kwargs):
         super().__init__()
         self.name: str = name

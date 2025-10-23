@@ -1,12 +1,62 @@
 import logging
 from typing import Any
 
+import pandas as pd
 from miniopy_async import Minio
 from neomodel import config
 from neomodel.async_.core import AsyncDatabase
+from pyiceberg.catalog import Catalog, load_catalog
+from pyiceberg.table import Table
 from tenacity import retry, stop_after_attempt, wait_random_exponential, retry_if_exception_type
 
-from src.configurations import StorageConfiguration
+from src.configurations import StorageConfiguration, NodeConfiguration, RelationshipConfiguration
+from src.models.enums import FileIOType
+
+
+class IcebergClient:
+    _s3_client: Minio = None
+    _catalog: Catalog = None
+    _instance: "IcebergClient" = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if self._catalog is not None:
+            return
+        logging.info("Initializing IcebergClient resources...")
+        self._catalog = load_catalog(
+            StorageConfiguration.ICEBERG_CATALOG_NAME
+        )
+        if self._s3_client is None and StorageConfiguration.FILE_IO_TYPE == FileIOType.S3:
+            self._s3_client = Minio(
+                endpoint=StorageConfiguration.S3_ENDPOINT_URL,
+                access_key=StorageConfiguration.S3_ACCESS_KEY,
+                secret_key=StorageConfiguration.S3_SECRET_KEY,
+                secure=False
+            )
+
+    def get_catalog(self) -> Catalog:
+        return self._catalog
+
+    def get_s3_client(self) -> Minio | None:
+        return self._s3_client
+
+    @classmethod
+    def generate_table_identifier(cls, namespace: str, table_name: str) -> str:
+        return f"{namespace}.{table_name}"
+
+    async def get_table(self, namespace: str, table_name: str) -> Table:
+        catalog: Catalog = self.get_catalog()
+        table_identifier: str = self.generate_table_identifier(namespace, table_name)
+        logging.info(f"Loading table {table_identifier}")
+        return catalog.load_table(table_identifier)
+
+    async def read_data(self, dataset_configuration: NodeConfiguration | RelationshipConfiguration) -> pd.DataFrame:
+        table: Table = await self.get_table(StorageConfiguration.ICEBERG_NAMESPACE, dataset_configuration.dataset_name)
+        return table.scan(selected_fields=tuple(dataset_configuration.input_columns())).to_pandas()
 
 
 class Neo4jClient:
@@ -127,23 +177,7 @@ class Neo4jClient:
             logging.error(f"Dropping {index_name} index failed: {e}")
 
 
-class MinioClient:
-    MINIO_ENDPOINT_URL: str = StorageConfiguration.MINIO_ENDPOINT_URL
-    MINIO_ACCESS_KEY: str = StorageConfiguration.MINIO_ACCESS_KEY
-    MINIO_SECRET_KEY: str = StorageConfiguration.MINIO_SECRET_KEY
-    _instance: 'MinioClient' = None
+class DataStorageMixin:
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-            cls._instance.client = Minio(
-                endpoint=cls.MINIO_ENDPOINT_URL,
-                access_key=cls.MINIO_ACCESS_KEY,
-                secret_key=cls.MINIO_SECRET_KEY,
-                secure=False,
-            )
-        return cls._instance
-
-    @staticmethod
-    def connect():
-        return MinioClient().client
+    def read_data(self, configuration: NodeConfiguration | RelationshipConfiguration):
+        return IcebergClient().read_data(configuration)
